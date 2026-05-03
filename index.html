@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDG's 리틀 히어로 | 나의 지구 지키기 프로젝트</title>
+  <link rel="stylesheet" href="index.css">
+  <!-- AOS for animations might be overkill, sticking to standard CSS for efficiency -->
+</head>
+<body>
+  <div class="app-container">
+    <!-- Landscape Mode Side Panel (Hidden on Mobile) -->
+    <div class="side-banner">
+      <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; -webkit-text-fill-color: initial;">SDG's 리틀 히어로</h1>
+      <p style="font-size: 1.2rem; opacity: 0.9;">"지구를 구하는 영웅은<br>멀리있지 않아요.<br>바로 당신의 작은 실천에서<br>시작됩니다."</p>
+      <div style="margin-top: 40px; font-size: 5rem;">🌍</div>
+    </div>
+
+    <!-- Main Mobile/Tablet Content -->
+    <div style="flex: 1.5; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
+      <header>
+        <h1>SDG's 리틀 히어로</h1>
+      </header>
+
+      <main id="app-main">
+        <!-- STEP 0: Login (First Screen) -->
+        <section id="step-login" class="card">
+          <!-- All elements grouped to move together to the center -->
+          <div style="width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center; text-align: center; margin: 0 auto;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 15px; width: 100%;">
+              <span style="font-size: 2.5rem; animation: bounce 2s infinite; display: inline-block;">🌟</span>
+              <h2 style="font-size: 1.8rem; font-weight: 900; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin: 0; white-space: nowrap;">히어로 출석체크!</h2>
+            </div>
+            
+            
+            <div style="width: 100%; position: relative; margin-bottom: 25px;">
+              <select id="hero-name" style="width: 100%; padding: 18px; font-size: 1.1rem; border-radius: 20px; border: 2px solid #e2e8f0; background: white; appearance: none; text-align: center; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.3s; color: var(--text-main);">
+                <option value="">이름을 불러오는 중...</option>
+              </select>
+              <div style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted);">▼</div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%;" onclick="handleLogin()">히어로 입장하기 🚀</button>
+            
+            <div id="login-loader" style="display: none; margin-top: 20px; font-size: 0.9rem; color: var(--primary); font-weight: bold;">
+              본부와 연결 중입니다... 📡
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 1: SDG Intro -->
+        <section id="step-sdg-intro" class="card" style="display: none; text-align: center; padding: 18px;">
+          <div class="sdg-intro-hero">
+            <div class="sdg-intro-emoji">🌍</div>
+            <h2 class="sdg-intro-title">세계가 함께 만든 우리의 약속</h2>
+            <p class="sdg-intro-tagline">지속가능발전목표 <strong>SDGs</strong>는<br>지구와 모두의 행복을 위한 <strong>17가지 약속</strong>이에요.</p>
+          </div>
+
+          <div class="sdg-intro-features">
+            <div class="sdg-intro-feature" style="--accent-color: #ef4444;">
+              <div class="feature-icon">🤝</div>
+              <div class="feature-text">
+                <h4>모두를 위한 약속</h4>
+                <p>배고픈 사람 없는 세상, 누구나 공부할 수 있는 세상을 만들어요.</p>
+              </div>
+            </div>
+            <div class="sdg-intro-feature" style="--accent-color: #0ea5e9;">
+              <div class="feature-icon">💧</div>
+              <div class="feature-text">
+                <h4>지구를 지키는 약속</h4>
+                <p>깨끗한 물과 공기, 푸른 자연을 함께 보호해요.</p>
+              </div>
+            </div>
+            <div class="sdg-intro-feature" style="--accent-color: #10b981;">
+              <div class="feature-icon">🎯</div>
+              <div class="feature-text">
+                <h4>2030년까지의 목표</h4>
+                <p>우리가 힘을 합치면 더 멋진 지구를 만들 수 있어요!</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="goToStep(1.5)" style="width: 100%;">17가지 약속 확인하기 🔍</button>
+        </section>
+
+        <!-- STEP 1.5: SDG Gallery Items -->
+        <section id="step-sdg-gallery" class="card" style="display: none; padding-top: 0; margin-top: 0;">
+          <h2 style="font-size: 1.35rem; color: var(--primary); margin-bottom: 4px; text-align: center;">17가지 약속 살펴보기 🌎</h2>
+          <p style="text-align: center; color: var(--text-muted); margin-bottom: 12px; font-size: 0.8rem; font-weight: 700;">관심 있는 항목을 눌러 실천 미션을 정해보세요!</p>
+
+          <div class="sdg-gallery">
+            <div class="sdg-item" style="--sdg-color: #E5243B;" onclick="openMissionPicker(1)"><span class="sdg-num">01</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-01-1024x1024.png"><span class="sdg-label">빈곤 퇴치</span></div>
+            <div class="sdg-item" style="--sdg-color: #DDA63A;" onclick="openMissionPicker(2)"><span class="sdg-num">02</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-02-1024x1024.png"><span class="sdg-label">기아 종식</span></div>
+            <div class="sdg-item" style="--sdg-color: #4C9F38;" onclick="openMissionPicker(3)"><span class="sdg-num">03</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-03-1024x1024.png"><span class="sdg-label">건강과 웰빙</span></div>
+            <div class="sdg-item" style="--sdg-color: #C5192D;" onclick="openMissionPicker(4)"><span class="sdg-num">04</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-04-1024x1024.png"><span class="sdg-label">양질의 교육</span></div>
+            <div class="sdg-item" style="--sdg-color: #FF3A21;" onclick="openMissionPicker(5)"><span class="sdg-num">05</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-05-1024x1024.png"><span class="sdg-label">성평등</span></div>
+            <div class="sdg-item" style="--sdg-color: #26BDE2;" onclick="openMissionPicker(6)"><span class="sdg-num">06</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-06-1024x1024.png"><span class="sdg-label">깨끗한 물과 위생</span></div>
+            <div class="sdg-item" style="--sdg-color: #FCC30B;" onclick="openMissionPicker(7)"><span class="sdg-num">07</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-07-1024x1024.png"><span class="sdg-label">모두를 위한 에너지</span></div>
+            <div class="sdg-item" style="--sdg-color: #A21942;" onclick="openMissionPicker(8)"><span class="sdg-num">08</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-08-1024x1024.png"><span class="sdg-label">양질의 일자리</span></div>
+            <div class="sdg-item" style="--sdg-color: #FD6925;" onclick="openMissionPicker(9)"><span class="sdg-num">09</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-09-1024x1024.png"><span class="sdg-label">산업·혁신·인프라</span></div>
+            <div class="sdg-item" style="--sdg-color: #DD1367;" onclick="openMissionPicker(10)"><span class="sdg-num">10</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-10-1024x1024.png"><span class="sdg-label">불평등 완화</span></div>
+            <div class="sdg-item" style="--sdg-color: #FD9D24;" onclick="openMissionPicker(11)"><span class="sdg-num">11</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-11-1024x1024.png"><span class="sdg-label">지속가능한 도시</span></div>
+            <div class="sdg-item" style="--sdg-color: #BF8B2E;" onclick="openMissionPicker(12)"><span class="sdg-num">12</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-12-1024x1024.png"><span class="sdg-label">책임감 있는 소비</span></div>
+            <div class="sdg-item" style="--sdg-color: #3F7E44;" onclick="openMissionPicker(13)"><span class="sdg-num">13</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-13-1024x1024.png"><span class="sdg-label">기후 위기 대응</span></div>
+            <div class="sdg-item" style="--sdg-color: #0A97D9;" onclick="openMissionPicker(14)"><span class="sdg-num">14</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-14-1024x1024.png"><span class="sdg-label">해양생태계 보전</span></div>
+            <div class="sdg-item" style="--sdg-color: #56C02B;" onclick="openMissionPicker(15)"><span class="sdg-num">15</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-15-1024x1024.png"><span class="sdg-label">육상생태계 보전</span></div>
+            <div class="sdg-item" style="--sdg-color: #00689D;" onclick="openMissionPicker(16)"><span class="sdg-num">16</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-16-1024x1024.png"><span class="sdg-label">평화·정의·제도</span></div>
+            <div class="sdg-item" style="--sdg-color: #19486A;" onclick="openMissionPicker(17)"><span class="sdg-num">17</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-17-1024x1024.png"><span class="sdg-label">지구촌 협력</span></div>
+          </div>
+
+          <div style="text-align: center; margin-top: 14px;">
+            <button id="btn-next-step" class="btn btn-primary" onclick="goToStep(2)" style="display: none; width: 100%;">선택한 미션 확인하기 🏃</button>
+          </div>
+        </section>
+
+        <!-- STEP 2: Mission Summary (NEW) -->
+        <section id="step-summary" class="card" style="display: none; padding: 20px;">
+          <h2 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 15px; text-align: center;">선택한 미션 확인 🔍</h2>
+          
+          <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 15px; margin-bottom: 20px;">
+            <!-- Left: Missions -->
+            <div style="background: #f8fafc; padding: 15px; border-radius: 20px; border: 1px dashed var(--primary); display: flex; flex-direction: column;">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-align: center; font-weight: 800;">실천할 약속들 ✅</p>
+              <div id="selection-chips" style="display: flex; flex-direction: column; gap: 8px; flex: 1;"></div>
+            </div>
+
+            <!-- Right: Vision -->
+            <div style="display: flex; flex-direction: column;">
+              <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--primary); font-weight: 800;">✨ 나의 변화 다짐하기</h3>
+              <textarea id="my-goal" placeholder="챌린지가 끝나면 나는 어떤 사람이 되어 있을까요?&#10;&#10;예: '지구를 생각하며 분리배출을 잘하는 히어로!', '음식을 남기지 않는 감사한 마음을 가진 어린이!'" style="flex: 1; min-height: 150px; border: 2px solid #f1f5f9; border-radius: 12px; font-size: 0.85rem; padding: 12px; line-height: 1.5;" oninput="saveState()"></textarea>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button class="btn" style="flex: 1; background: #f1f5f9; color: #475569; padding: 10px; font-size: 0.85rem;" onclick="goToStep(1.5)">다시 고르기</button>
+            <button class="btn btn-primary" style="flex: 2; padding: 10px; font-size: 0.95rem;" onclick="goToStep(2.5)">기간 설정하러 가기! ✨</button>
+          </div>
+        </section>
+
+
+        <!-- STEP 2.5: Challenge Period Setup -->
+        <section id="step-vision" class="card" style="padding: 25px; display: none;">
+          <h2 style="font-size: 1.3rem; color: var(--secondary); margin-bottom: 20px; text-align: center;">챌린지 기간 설정 📅</h2>
+          
+          <div style="margin-bottom: 25px;">
+            <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--secondary); font-weight: 800;">언제부터 언제까지 할까요?</h3>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
+              <input type="date" id="start-date" onchange="updateDurationDisplay()" style="flex: 1; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 0.95rem;">
+              <span style="font-weight: 800; color: #94a3b8;">~</span>
+              <input type="date" id="end-date" onchange="updateDurationDisplay()" style="flex: 1; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 0.95rem;">
+            </div>
+            
+            <div id="duration-info" style="background: #f0f9ff; padding: 15px; border-radius: 15px; border: 1px solid #bae6fd; text-align: center;">
+              <span style="font-size: 0.9rem; color: #0369a1; font-weight: 800;">총 <span id="setup-total-days" style="font-size: 1.2rem; color: #0284c7;">0</span>일 동안의 도전입니다! 🚀</span>
+            </div>
+          </div>
+          
+          <button class="btn btn-primary" onclick="confirmMissions()" style="width: 100%; padding: 12px; font-size: 1rem;">최종 미션 확정하기! 🔥</button>
+        </section>
+
+        <!-- STEP 3: Dashboard (Enhanced) -->
+        <section id="step-dashboard" style="display: none;">
+          <!-- Hero Header -->
+          <div class="card" style="padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: white;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="display-name" style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">영웅 히어로</span>
+              <button onclick="resetChallenge()" style="padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; background: #f1f5f9; border: none; cursor: pointer; color: #64748b;">⚙️ 챌린지 수정</button>
+            </div>
+            <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;" id="display-period">2026.04.01 ~ 04.07</div>
+          </div>
+
+          <!-- Progress Card -->
+          <div class="card progress-box" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <span style="font-weight: 800; font-size: 1rem;">성장 현황 📊</span>
+              <span id="current-day-label" style="background: var(--accent); color: white; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;">Day 1 / 7</span>
+            </div>
+            <div class="progress-bar-bg" style="margin-bottom: 10px;">
+              <div class="progress-bar-fill" id="total-progress"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+              <span id="progress-status-text">히어로가 성장하고 있어요!</span>
+              <span id="progress-text">0%</span>
+            </div>
+          </div>
+
+          <div id="active-missions">
+            <!-- Active Cards -->
+          </div>
+
+          <!-- Reflection Area -->
+          <div class="card reflection-box">
+            <h3 style="font-size: 0.85rem; margin-bottom: 6px;">📔 히어로 한 마디</h3>
+            <input id="daily-reflection" type="text" oninput="debounceAutoSave()" placeholder="오늘 실천하며 느낀 점을 한 줄로 남겨주세요!">
+          </div>
+
+          <div class="history-button-wrap">
+            <button class="btn btn-secondary" style="width: 100%; padding: 10px; font-size: 0.9rem;" onclick="toggleHistory()">📜 나의 성장 기록 보기</button>
+            <span id="save-status" class="save-status-inline"></span>
+          </div>
+        </section>
+
+        <!-- STEP 4: History (Redesigned) -->
+        <section id="step-history" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: linear-gradient(to right, #f0f9ff, #e0f2fe); padding: 12px 20px; border-radius: 20px;">
+            <h2 style="font-size: 1.3rem; font-weight: 900; color: #0369a1; margin: 0;">📜 반짝이는 히어로 발자취</h2>
+            <button onclick="goToStep(3)" style="padding: 8px 15px; background: white; border: 1px solid #bae6fd; border-radius: 12px; color: #0369a1; font-weight: 800; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">돌아가기</button>
+          </div>
+
+          <!-- Hero Vision Display in History -->
+          <div id="history-vision-box" class="card" style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 1.5rem;">✨</div>
+            <div>
+              <p style="font-size: 0.75rem; color: #92400e; font-weight: 800; margin-bottom: 3px;">나의 히어로 다짐</p>
+              <h3 id="history-display-goal" style="font-size: 1rem; font-weight: 900; color: #78350f; margin: 0;">지구를 구하는 멋진 히어로!</h3>
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 20px;">
+            <!-- Left: Table Records -->
+            <div id="history-container"></div>
+            
+            <!-- Right: Cumulative Growth Graph -->
+            <div class="card" style="padding: 20px; background: white; height: fit-content; border: 1px solid #e2e8f0;">
+              <h3 style="font-size: 1rem; margin-bottom: 20px; color: var(--primary); text-align: center;">🌱 히어로 성장 그래프</h3>
+              <div id="history-chart-container" style="height: 300px; display: flex; align-items: flex-end; gap: 8px; padding-bottom: 25px; border-bottom: 2px solid #f1f5f9; position: relative;">
+                <!-- Bars will be injected here -->
+              </div>
+              <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 15px;">매일매일 꾸준히 성장하고 있어요! ✨</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 5: Success -->
+        <section id="step-success" class="card" style="display: none; text-align: center;">
+          <div style="font-size: 5rem; margin-bottom: 30px;">🚀</div>
+          <h2 style="font-size: 1.8rem; margin-bottom: 15px;">본부로 전송 완료!</h2>
+          <p style="color: var(--text-muted); line-height: 1.6;">작은 실천이 쌓여 커다란 변화를 만들고 있어요.<br>내일 또 만나요!</p>
+          <button class="btn btn-secondary" style="margin-top: 40px;" onclick="resetView()">대시보드로 돌아가기</button>
+        </section>
+
+        <!-- STEP 6: Teacher Mode -->
+        <section id="step-teacher" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h2 style="font-size: 1.4rem; font-weight: 900;">🏫 선생님 메뉴</h2>
+            <button onclick="resetView()" style="padding: 8px 14px; background: #f1f5f9; border-radius: 12px; border: none; cursor: pointer; font-weight: 700;">닫기</button>
+          </div>
+
+          <div class="teacher-tabs">
+            <button class="teacher-tab active" data-tab="stats" onclick="switchTeacherTab('stats')">📊 우리 반 통계</button>
+            <button class="teacher-tab" data-tab="settings" onclick="switchTeacherTab('settings')">⚙️ 설정</button>
+          </div>
+
+          <!-- TAB: STATS -->
+          <div id="teacher-tab-stats" class="teacher-tab-content">
+            <div id="class-stats-loading" style="text-align:center; padding: 40px 20px; color: var(--text-muted); font-weight: 700;">
+              📡 데이터를 불러오는 중...
+            </div>
+
+            <div id="class-stats-content" style="display:none;">
+              <!-- Earth Impact Card -->
+              <div class="earth-impact-card">
+                <div class="earth-impact-header">
+                  <div class="earth-emoji">🌍</div>
+                  <div>
+                    <p class="earth-impact-label">우리 반이 지구를 지킨 점수</p>
+                    <h3 class="earth-impact-score"><span id="earth-score-text">0</span>점</h3>
+                  </div>
+                </div>
+                <div class="earth-impact-bar-bg">
+                  <div class="earth-impact-bar-fill" id="earth-score-fill"></div>
+                </div>
+                <p class="earth-impact-msg" id="earth-impact-msg">우리 반의 작은 실천이 지구를 더 푸르게 만들고 있어요!</p>
+              </div>
+
+              <!-- Summary -->
+              <div class="stats-summary">
+                <div class="summary-item"><span class="summary-num" id="class-total-students">0</span><span class="summary-label">참여 친구</span></div>
+                <div class="summary-item"><span class="summary-num" id="class-total-records">0</span><span class="summary-label">전체 기록</span></div>
+                <div class="summary-item"><span class="summary-num" id="class-total-tasks">0</span><span class="summary-label">실천 횟수</span></div>
+                <div class="summary-item"><span class="summary-num" id="class-avg-progress">0%</span><span class="summary-label">평균 성장</span></div>
+              </div>
+
+              <!-- Daily Practice Chart -->
+              <div class="card" style="padding: 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 10px;">
+                  <h3 style="font-size: 0.95rem; color: var(--primary); font-weight: 900;">📅 날짜별 실천 횟수</h3>
+                  <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">참가자 수에 따라 변동</span>
+                </div>
+                <div id="daily-chart" class="daily-chart"></div>
+                <p id="daily-chart-empty" style="text-align:center; color: var(--text-muted); font-size: 0.8rem; padding: 30px 10px; display:none;">아직 날짜별 기록이 없어요.</p>
+              </div>
+
+              <button class="btn btn-primary" style="width: 100%; margin-top: 14px; font-size: 0.9rem; padding: 12px;" onclick="loadTeacherStats()">🔄 통계 새로고침</button>
+            </div>
+          </div>
+
+          <!-- TAB: SETTINGS -->
+          <div id="teacher-tab-settings" class="teacher-tab-content" style="display:none;">
+
+            <!-- Class Connection Setup -->
+            <div class="card setup-card">
+              <h3 style="font-size: 1rem; margin-bottom: 10px; color: #92400e;">🔗 우리 학급에 연결하기</h3>
+              <p style="font-size: 0.78rem; color: #78350f; line-height: 1.5; margin-bottom: 10px;">다른 선생님도 이 앱을 자기 학급용으로 쓸 수 있어요. 아래 가이드를 따라 우리 학급 시트와 연결해주세요.</p>
+
+              <details class="setup-guide">
+                <summary>📚 처음 사용하는 선생님이라면 (3단계 가이드)</summary>
+                <ol>
+                  <li>
+                    <b>① 스프레드시트 사본 만들기</b>
+                    제공받은 SDG 리틀 히어로 템플릿 시트를 열고 <b>파일 → 사본 만들기</b>를 누르세요. 사본 이름은 <i>"우리반 SDG 히어로"</i> 처럼 자유롭게 지정합니다. (Apps Script 코드도 자동으로 함께 복사됩니다.)
+                  </li>
+                  <li>
+                    <b>② Apps Script 새 배포</b>
+                    내 사본 시트에서 <b>확장 프로그램 → Apps Script</b>를 열고, 우상단 <b>배포 → 새 배포</b> 클릭. 유형은 <b>웹 앱</b>, ⚠️ 액세스 권한은 반드시 <i>모든 사용자(Anyone)</i> 로 설정해야 합니다 (Google 계정 보유자/본인만으로 두면 데이터를 못 받아옵니다). 설정 후 <b>배포</b>를 누르고 표시된 <b>웹 앱 URL</b>을 복사합니다.
+                  </li>
+                  <li>
+                    <b>③ 아래 두 칸에 URL 붙여넣기</b>
+                    "본부 URL"엔 위에서 받은 웹 앱 URL을, "스프레드시트 주소"엔 사본 시트의 브라우저 주소창 URL을 각각 붙여넣고 저장. 저장 후 페이지를 새로고침(F5)하면 우리 학급 데이터가 표시됩니다.
+                  </li>
+                </ol>
+              </details>
+
+              <div class="url-config">
+                <label>📡 본부(Apps Script) URL <span class="url-required">*필수</span></label>
+                <div class="url-input-row">
+                  <input id="gas-url-input" type="text" placeholder="https://script.google.com/macros/s/.../exec">
+                  <button onclick="saveGasUrl()">저장</button>
+                </div>
+                <p class="config-hint">현재 사용 중: <code id="gas-url-current" style="font-size: 0.65rem; word-break: break-all;"></code></p>
+                <button class="btn-link" onclick="resetGasUrlToDefault()">↩️ 기본 URL로 복원</button>
+              </div>
+
+              <div class="url-config">
+                <label>📊 스프레드시트 주소</label>
+                <div class="url-input-row">
+                  <input id="spreadsheet-url-input" type="text" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                  <button onclick="saveSpreadsheetUrl()">저장</button>
+                </div>
+                <p class="config-hint">아래 '시트 열기' 버튼이 여는 주소입니다.</p>
+                <button class="btn btn-primary" style="margin-top: 8px; width: 100%; font-size: 0.85rem; padding: 10px;" onclick="openSpreadsheet()">📈 저장된 스프레드시트 열기</button>
+              </div>
+            </div>
+
+            <div class="reset-grid">
+              <div class="reset-mini-card reset-device">
+                <h4>💣 기기 데이터</h4>
+                <p>이 기기의 본 학생 진행 상태만 삭제 (시트 기록은 보존)</p>
+                <button onclick="teacherReset()">초기화 🔥</button>
+              </div>
+              <div class="reset-mini-card reset-sheet">
+                <h4>🧹 시트 데이터</h4>
+                <p>스프레드시트의 모든 학생 기록 영구 삭제 (되돌릴 수 없음)</p>
+                <button onclick="clearSpreadsheetData()">비우기 🧼</button>
+              </div>
+            </div>
+
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.72rem;">* 선생님만 접속 가능한 메뉴입니다.</p>
+          </div>
+        </section>
+      </main>
+
+      <footer style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.8rem; opacity: 0.8;">
+        <span onclick="goToStep(6)" style="cursor: pointer; background: #f1f5f9; padding: 5px 10px; border-radius: 8px; margin-right: 10px; font-weight: bold; color: #475569;">👨‍🏫 선생님 메뉴</span>
+        &copy; 2026 SDG's 리틀 히어로 - 지구를 구하는 가장 즐거운 방법
+      </footer>
+    </div>
+
+    <div id="mission-picker-modal" class="modal-backdrop" onclick="closeMissionPicker(event)">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeMissionPicker()">✕</button>
+        <h3 id="picker-title" style="margin-bottom: 12px; color: var(--primary); text-align: center; font-size: 1.2rem;">실천하기</h3>
+        
+        <div id="picker-tasks" style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px;">
+          <!-- Task buttons will be injected here -->
+        </div>
+        
+        <div style="border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+          <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: var(--text-main);">✨ 나만의 약속 직접 만들기</p>
+          <input type="text" id="custom-task-input" placeholder="나만의 미션을 입력하세요!" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; font-size: 0.95rem;" onkeypress="if(event.key==='Enter'){ addCustomTask(); }">
+          <button class="btn btn-primary" onclick="addCustomTask()" style="width: 100%; padding: 14px; font-size: 1rem;">미션 추가하기 ➕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Toast Notification -->
+  <div id="toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 50px; font-size: 0.9rem; z-index: 10000; display: none; animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
