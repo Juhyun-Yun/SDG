@@ -390,7 +390,7 @@ function goToStep(step) {
     updateDashboard();
   }
   if (step === 6) {
-    switchTeacherTab('stats');
+    populateSettingsInputs();
   }
 
   if (STEPS[step]) STEPS[step].style.display = 'block';
@@ -964,6 +964,33 @@ function openSpreadsheet() {
     return;
   }
   window.open(url, '_blank');
+}
+
+async function generateSheetDashboard(event) {
+  if (APP_STATE.gasUrl === 'PASTE_YOUR_GAS_WEB_APP_URL_HERE' || !APP_STATE.gasUrl.startsWith('https')) {
+    alert('먼저 본부 URL을 설정해주세요.');
+    return;
+  }
+  if (!confirm('📊 스프레드시트에 "📊 대시보드" 시트를 생성/갱신합니다.\n기존 대시보드가 있으면 새 데이터로 덮어씁니다.\n진행할까요?')) return;
+
+  const btn = event && event.target ? event.target : null;
+  const originalText = btn ? btn.innerText : '';
+  if (btn) { btn.disabled = true; btn.innerText = '⏳ 생성 요청 전송 중...'; }
+
+  try {
+    await fetch(APP_STATE.gasUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ action: 'generateDashboard' })
+    });
+    setTimeout(function() {
+      if (btn) { btn.disabled = false; btn.innerText = originalText; }
+      alert('✅ 대시보드 생성 요청을 보냈습니다.\n10~30초 후 스프레드시트의 "📊 대시보드" 시트를 확인해주세요.\n(차트가 들어가서 시간이 좀 걸려요)');
+    }, 1500);
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerText = originalText; }
+    alert('❌ 오류: ' + err.message);
+  }
 }
 
 async function clearSpreadsheetData() {
