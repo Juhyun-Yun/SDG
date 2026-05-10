@@ -246,57 +246,12 @@
             <button onclick="resetView()" style="padding: 8px 14px; background: #f1f5f9; border-radius: 12px; border: none; cursor: pointer; font-weight: 700;">닫기</button>
           </div>
 
-          <div class="teacher-tabs">
-            <button class="teacher-tab active" data-tab="stats" onclick="switchTeacherTab('stats')">📊 우리 반 통계</button>
-            <button class="teacher-tab" data-tab="settings" onclick="switchTeacherTab('settings')">⚙️ 설정</button>
+          <div class="card" style="background: linear-gradient(135deg, #ecfdf5, #f0f9ff); border: 1px solid rgba(16,185,129,0.2); margin-bottom: 12px; padding: 14px 16px;">
+            <p style="font-size: 0.85rem; color: #065f46; font-weight: 700; line-height: 1.5; margin-bottom: 8px;">📊 우리 반 통계는 스프레드시트의 <b>"📊 대시보드"</b> 시트에서 확인하세요.</p>
+            <p style="font-size: 0.72rem; color: #047857; line-height: 1.5;">학생이 기록을 저장할 때마다 자동으로 갱신됩니다. (표 + 차트 포함)</p>
           </div>
 
-          <!-- TAB: STATS -->
-          <div id="teacher-tab-stats" class="teacher-tab-content">
-            <div id="class-stats-loading" style="text-align:center; padding: 40px 20px; color: var(--text-muted); font-weight: 700;">
-              📡 데이터를 불러오는 중...
-            </div>
-
-            <div id="class-stats-content" style="display:none;">
-              <!-- Earth Impact Card -->
-              <div class="earth-impact-card">
-                <div class="earth-impact-header">
-                  <div class="earth-emoji">🌍</div>
-                  <div>
-                    <p class="earth-impact-label">우리 반이 지구를 지킨 점수</p>
-                    <h3 class="earth-impact-score"><span id="earth-score-text">0</span>점</h3>
-                  </div>
-                </div>
-                <div class="earth-impact-bar-bg">
-                  <div class="earth-impact-bar-fill" id="earth-score-fill"></div>
-                </div>
-                <p class="earth-impact-msg" id="earth-impact-msg">우리 반의 작은 실천이 지구를 더 푸르게 만들고 있어요!</p>
-              </div>
-
-              <!-- Summary -->
-              <div class="stats-summary">
-                <div class="summary-item"><span class="summary-num" id="class-total-students">0</span><span class="summary-label">참여 친구</span></div>
-                <div class="summary-item"><span class="summary-num" id="class-total-records">0</span><span class="summary-label">전체 기록</span></div>
-                <div class="summary-item"><span class="summary-num" id="class-total-tasks">0</span><span class="summary-label">실천 횟수</span></div>
-                <div class="summary-item"><span class="summary-num" id="class-avg-progress">0%</span><span class="summary-label">평균 성장</span></div>
-              </div>
-
-              <!-- Daily Practice Chart -->
-              <div class="card" style="padding: 16px;">
-                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 10px;">
-                  <h3 style="font-size: 0.95rem; color: var(--primary); font-weight: 900;">📅 날짜별 실천 횟수</h3>
-                  <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">참가자 수에 따라 변동</span>
-                </div>
-                <div id="daily-chart" class="daily-chart"></div>
-                <p id="daily-chart-empty" style="text-align:center; color: var(--text-muted); font-size: 0.8rem; padding: 30px 10px; display:none;">아직 날짜별 기록이 없어요.</p>
-              </div>
-
-              <button class="btn btn-primary" style="width: 100%; margin-top: 14px; font-size: 0.9rem; padding: 12px;" onclick="loadTeacherStats()">🔄 통계 새로고침</button>
-            </div>
-          </div>
-
-          <!-- TAB: SETTINGS -->
-          <div id="teacher-tab-settings" class="teacher-tab-content" style="display:none;">
+          <div id="teacher-tab-settings" class="teacher-tab-content">
 
             <!-- Class Connection Setup -->
             <div class="card setup-card">
