@@ -11,9 +11,20 @@
   <div class="app-container">
     <!-- Landscape Mode Side Panel (Hidden on Mobile) -->
     <div class="side-banner">
-      <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; -webkit-text-fill-color: initial;">SDG's 리틀 히어로</h1>
-      <p style="font-size: 1.2rem; opacity: 0.9;">"지구를 구하는 영웅은<br>멀리있지 않아요.<br>바로 당신의 작은 실천에서<br>시작됩니다."</p>
-      <div style="margin-top: 40px; font-size: 5rem;">🌍</div>
+      <h1 style="font-size: 2.4rem; margin-top: 19px; margin-bottom: 16px; color: white; -webkit-text-fill-color: initial; line-height: 1.15;">SDG's 리틀<br>히어로</h1>
+      <p style="font-size: 1rem; opacity: 0.9; margin-bottom: 24px;">"지구를 구하는 영웅은<br>멀리있지 않아요.<br>바로 당신의 작은 실천에서<br>시작됩니다."</p>
+
+      <!-- Live Class Stats Sidebar -->
+      <div class="sidebar-stats" id="sidebar-stats">
+        <p class="sidebar-stats-title">우리 반 현황 ✨</p>
+        <div class="sidebar-stat-grid">
+          <div class="sidebar-stat"><span class="sb-num" id="sb-students">-</span><span class="sb-label">참여 친구</span></div>
+          <div class="sidebar-stat"><span class="sb-num" id="sb-records">-</span><span class="sb-label">전체 기록</span></div>
+          <div class="sidebar-stat"><span class="sb-num" id="sb-tasks">-</span><span class="sb-label">실천 횟수</span></div>
+          <div class="sidebar-stat"><span class="sb-num" id="sb-avg">-</span><span class="sb-label">평균 성장</span></div>
+        </div>
+        <p class="sidebar-stats-msg" id="sb-msg">함께 만드는 멋진 변화 🌱</p>
+      </div>
     </div>
 
     <!-- Main Mobile/Tablet Content -->
@@ -242,16 +253,47 @@
         <!-- STEP 6: Teacher Mode -->
         <section id="step-teacher" style="display: none;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h2 style="font-size: 1.4rem; font-weight: 900;">🏫 선생님 메뉴</h2>
+            <h2 style="font-size: 1.4rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">🏫 선생님 메뉴</h2>
             <button onclick="resetView()" style="padding: 8px 14px; background: #f1f5f9; border-radius: 12px; border: none; cursor: pointer; font-weight: 700;">닫기</button>
           </div>
 
-          <div class="card" style="background: linear-gradient(135deg, #ecfdf5, #f0f9ff); border: 1px solid rgba(16,185,129,0.2); margin-bottom: 12px; padding: 14px 16px;">
-            <p style="font-size: 0.85rem; color: #065f46; font-weight: 700; line-height: 1.5; margin-bottom: 8px;">📊 우리 반 통계는 스프레드시트의 <b>"📊 대시보드"</b> 시트에서 확인하세요.</p>
-            <p style="font-size: 0.72rem; color: #047857; line-height: 1.5;">학생이 기록을 저장할 때마다 자동으로 갱신됩니다. (표 + 차트 포함)</p>
+          <div class="teacher-tabs">
+            <button class="teacher-tab active" data-tab="stats" onclick="switchTeacherTab('stats')">📊 통계</button>
+            <button class="teacher-tab" data-tab="settings" onclick="switchTeacherTab('settings')">⚙️ 설정</button>
           </div>
 
-          <div id="teacher-tab-settings" class="teacher-tab-content">
+          <!-- TAB: STATS -->
+          <div id="teacher-tab-stats" class="teacher-tab-content">
+            <div id="class-stats-loading" style="text-align:center; padding: 30px 20px; color: var(--text-muted); font-weight: 700;">📡 데이터를 불러오는 중...</div>
+
+            <div id="class-stats-content" style="display:none;">
+              <div class="stats-summary" style="margin-bottom: 14px;">
+                <div class="summary-item"><span class="summary-num" id="class-total-students">0</span><span class="summary-label">참여 친구</span></div>
+                <div class="summary-item"><span class="summary-num" id="class-total-records">0</span><span class="summary-label">전체 기록</span></div>
+                <div class="summary-item"><span class="summary-num" id="class-total-tasks">0</span><span class="summary-label">실천 횟수</span></div>
+                <div class="summary-item"><span class="summary-num" id="class-avg-progress">0%</span><span class="summary-label">평균 성장</span></div>
+              </div>
+
+              <div class="card" style="padding: 14px 16px; margin-bottom: 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 8px;">
+                  <h3 style="font-size: 0.9rem; color: var(--primary); font-weight: 900;">📅 날짜별 우리 반 평균 성장률</h3>
+                  <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">학생 점수 평균 (%)</span>
+                </div>
+                <div id="daily-chart" class="daily-chart"></div>
+                <p id="daily-chart-empty" style="text-align:center; color:var(--text-muted); font-size:0.78rem; padding:14px; display:none;">아직 날짜별 기록이 없어요.</p>
+              </div>
+
+              <div class="card" style="background: linear-gradient(135deg, #ecfdf5, #f0f9ff); border: 1px solid rgba(16,185,129,0.2); padding: 14px 16px; margin-bottom: 10px;">
+                <p style="font-size: 0.82rem; color: #065f46; font-weight: 700; line-height: 1.5; margin-bottom: 8px;">📊 더 자세한 통계는 스프레드시트의 <b>"📊 대시보드"</b> 시트에서 확인하세요.</p>
+                <button class="btn btn-primary" style="width:100%; padding: 10px; font-size: 0.85rem;" onclick="openSpreadsheet()">📈 스프레드시트 대시보드 열기</button>
+              </div>
+
+              <button class="btn btn-secondary" style="width:100%; padding: 10px; font-size: 0.85rem;" onclick="loadTeacherStats()">🔄 새로고침</button>
+            </div>
+          </div>
+
+          <!-- TAB: SETTINGS -->
+          <div id="teacher-tab-settings" class="teacher-tab-content" style="display:none;">
 
             <!-- Class Connection Setup -->
             <div class="card setup-card">

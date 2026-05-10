@@ -80,6 +80,8 @@ window.onload = () => {
     goToStep(0);
     loadStudentList();
     renderThemesSelection();
+    loadSidebarStats();
+    setInterval(loadSidebarStats, 120000); // refresh every 2 min
   } catch (e) {
     console.error("Initialization error:", e);
     // If something crashes, try to at least show the login screen
@@ -390,7 +392,7 @@ function goToStep(step) {
     updateDashboard();
   }
   if (step === 6) {
-    populateSettingsInputs();
+    switchTeacherTab('stats');
   }
 
   if (STEPS[step]) STEPS[step].style.display = 'block';
@@ -463,6 +465,30 @@ function saveSpreadsheetUrl() {
   alert('✅ 스프레드시트 주소가 저장되었습니다.');
 }
 
+async function loadSidebarStats() {
+  if (!APP_STATE.gasUrl || !APP_STATE.gasUrl.startsWith('https')) return;
+  try {
+    const res = await fetch(APP_STATE.gasUrl + '?action=getClassStats');
+    if (!res.ok) return;
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch (e) { return; }
+    if (!data.stats) return;
+    const s = data.stats;
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+    setText('sb-students', s.totalStudents);
+    setText('sb-records', s.totalRecords);
+    setText('sb-tasks', s.totalTasks);
+    setText('sb-avg', s.avgProgress + '%');
+    let msg;
+    if (s.totalRecords >= 30) msg = '🌟 우리 반은 진짜 히어로!';
+    else if (s.totalRecords >= 10) msg = '🌱 멋진 실천이 쌓이고 있어요!';
+    else if (s.totalRecords > 0) msg = '✨ 시작이 반! 함께 해요!';
+    else msg = '함께 만드는 멋진 변화 🌱';
+    setText('sb-msg', msg);
+  } catch (err) { /* silent */ }
+}
+
 async function loadTeacherStats() {
   const loadingEl = document.getElementById('class-stats-loading');
   const contentEl = document.getElementById('class-stats-content');
@@ -504,25 +530,10 @@ async function loadTeacherStats() {
 }
 
 function renderClassStats(stats) {
-  // Earth Score: combined participation + average effort, capped at 100
-  const participationBoost = Math.min(50, stats.totalRecords * 4);
-  const earthScore = Math.min(100, Math.round((stats.avgProgress + participationBoost) / 1.5));
-
-  document.getElementById('earth-score-text').innerText = earthScore;
-  document.getElementById('earth-score-fill').style.width = earthScore + '%';
-
-  let msg;
-  if (earthScore >= 80) msg = '🌟 정말 멋져요! 우리 반은 지구의 진짜 히어로입니다!';
-  else if (earthScore >= 50) msg = '🌱 차곡차곡 쌓여가는 실천이 지구를 푸르게 만들고 있어요!';
-  else if (earthScore >= 20) msg = '✨ 시작이 반! 함께 노력하면 지구가 더 행복해져요!';
-  else msg = '🌎 우리 반의 작은 실천 하나하나가 지구를 지킵니다!';
-  document.getElementById('earth-impact-msg').innerText = msg;
-
   document.getElementById('class-total-students').innerText = stats.totalStudents;
   document.getElementById('class-total-records').innerText = stats.totalRecords;
   document.getElementById('class-total-tasks').innerText = stats.totalTasks;
   document.getElementById('class-avg-progress').innerText = stats.avgProgress + '%';
-
   renderDailyChart(stats.dailyStats || []);
 }
 
@@ -537,23 +548,80 @@ function renderDailyChart(dailyStats) {
     if (emptyEl) emptyEl.style.display = 'block';
     return;
   }
-  chartEl.style.display = 'flex';
+  chartEl.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
 
-  const maxTasks = Math.max(1, ...recent.map(d => d.totalTasks));
-  chartEl.innerHTML = recent.map(d => {
-    const heightPct = Math.max(3, Math.round((d.totalTasks / maxTasks) * 100));
+  const w = Math.max(260, chartEl.clientWidth || 280);
+  const h = 120;
+  const padL = 26, padR = 6, padT = 8, padB = 22;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const COLOR = '#6ee7b7';
+
+  // Y-axis is fixed 0~100% (avg progress) regardless of data range
+  const yMax = 100;
+  const yTicks = 4;
+
+  // Use avgProgress if present (new GAS), fall back to deriving from totalTasks if needed
+  const hasAvg = recent.some(d => typeof d.avgProgress === 'number');
+  if (!hasAvg) {
+    console.warn('[chart] avgProgress 필드 없음 — GAS 재배포가 필요합니다.');
+  }
+  const points = recent.map((d, i) => {
+    const val = (typeof d.avgProgress === 'number') ? d.avgProgress : 0;
+    const x = padL + (recent.length === 1 ? innerW / 2 : (i * innerW / (recent.length - 1)));
+    const y = padT + innerH - (val / yMax) * innerH;
+    return { x: x, y: y, val: val, label: d.label };
+  });
+
+  // If only 1 point, draw a short horizontal line so it's visible
+  if (points.length === 1) {
+    const p = points[0];
+    points.unshift({ x: padL + 8, y: p.y, val: p.val, label: '' });
+    points.push({ x: padL + innerW - 8, y: p.y, val: p.val, label: '' });
+  }
+
+  const pathD = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ');
+  const areaD = points.length > 1
+    ? pathD + ` L ${points[points.length - 1].x} ${padT + innerH} L ${points[0].x} ${padT + innerH} Z`
+    : '';
+
+  let yAxisSvg = '';
+  for (let i = 0; i <= yTicks; i++) {
+    const val = Math.round(yMax * (yTicks - i) / yTicks);
+    const y = padT + (i * innerH / yTicks);
+    yAxisSvg += `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="#f1f5f9" stroke-width="0.4"/>`;
+    yAxisSvg += `<text x="${padL - 3}" y="${y + 2}" text-anchor="end" font-size="7" fill="#94a3b8" font-weight="400">${val}%</text>`;
+  }
+
+  const showEvery = recent.length > 6 ? 2 : 1;
+  const pointsSvg = points.map((p, i) => {
+    const showLabel = i % showEvery === 0 || i === points.length - 1;
     return `
-      <div class="daily-bar-col">
-        <span class="daily-bar-value">${d.totalTasks}</span>
-        <div class="daily-bar-area">
-          <div class="daily-bar-fill" style="height: ${heightPct}%;"></div>
-        </div>
-        <span class="daily-bar-label">${d.label}</span>
-        <span class="daily-bar-meta">${d.participants}명</span>
-      </div>
+      <circle cx="${p.x}" cy="${p.y}" r="2" fill="white" stroke="${COLOR}" stroke-width="1"/>
+      ${showLabel ? `<text x="${p.x}" y="${p.y - 5}" text-anchor="middle" font-size="7" font-weight="500" fill="#64748b">${p.val}%</text>` : ''}
     `;
   }).join('');
+
+  const xLabelsSvg = points.map((p, i) => {
+    const showLabel = i % showEvery === 0 || i === points.length - 1;
+    if (!showLabel) return '';
+    return `
+      <text x="${p.x}" y="${padT + innerH + 10}" text-anchor="middle" font-size="7.5" fill="#94a3b8" font-weight="500">${p.label}</text>
+    `;
+  }).join('');
+
+  chartEl.innerHTML = `
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block; overflow:visible;">
+      ${yAxisSvg}
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + innerH}" stroke="#e2e8f0" stroke-width="0.6"/>
+      <line x1="${padL}" y1="${padT + innerH}" x2="${w - padR}" y2="${padT + innerH}" stroke="#e2e8f0" stroke-width="0.6"/>
+      ${areaD ? `<path d="${areaD}" fill="${COLOR}" fill-opacity="0.12"/>` : ''}
+      ${points.length > 1 ? `<path d="${pathD}" fill="none" stroke="${COLOR}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+      ${pointsSvg}
+      ${xLabelsSvg}
+    </svg>
+  `;
 }
 
 function confirmMissions() {
@@ -774,6 +842,8 @@ async function autoSave() {
     localStorage.setItem(hKey, JSON.stringify(currentHist));
     status.innerText = '✅ 본부에 전송되었습니다!';
     setTimeout(() => { status.innerText = ''; }, 3000);
+    // Refresh sidebar stats after a brief delay (give GAS time to process)
+    setTimeout(loadSidebarStats, 3000);
   } catch (err) { status.innerText = '❌ 연결 실패'; }
 }
 

@@ -77,8 +77,9 @@ function doGet(e) {
         const dd = ('0' + dateMatch[3]).slice(-2);
         const dateKey = yyyy + '-' + mm + '-' + dd;
         const label = parseInt(dateMatch[2], 10) + '/' + parseInt(dateMatch[3], 10);
-        if (!byDate[dateKey]) byDate[dateKey] = { dateKey: dateKey, label: label, totalTasks: 0, participants: {} };
+        if (!byDate[dateKey]) byDate[dateKey] = { dateKey: dateKey, label: label, totalTasks: 0, studentLatest: {}, participants: {} };
         byDate[dateKey].totalTasks += tasksCount;
+        byDate[dateKey].studentLatest[name] = progress; // last row wins (sheet append order)
         byDate[dateKey].participants[name] = true;
       }
 
@@ -95,13 +96,18 @@ function doGet(e) {
     })).sort(function(a, b) { return b.avgProgress - a.avgProgress; });
 
     const dailyStats = Object.keys(byDate).sort().map(function(k) {
+      const scores = Object.keys(byDate[k].studentLatest).map(function(n) { return byDate[k].studentLatest[n]; });
+      const avg = scores.length > 0
+        ? Math.round(scores.reduce(function(a, b) { return a + b; }, 0) / scores.length)
+        : 0;
       return {
         dateKey: byDate[k].dateKey,
         label: byDate[k].label,
         totalTasks: byDate[k].totalTasks,
+        avgProgress: avg,
         participants: Object.keys(byDate[k].participants).length
       };
-    });
+    }).filter(function(d) { return d.avgProgress > 0; });
 
     return ContentService.createTextOutput(JSON.stringify({
       stats: {
@@ -256,8 +262,9 @@ function generateDashboardSheet() {
         const dd = ('0' + dateMatch[3]).slice(-2);
         const dateKey = yyyy + '-' + mm + '-' + dd;
         const label = parseInt(dateMatch[2], 10) + '월 ' + parseInt(dateMatch[3], 10) + '일';
-        if (!byDate[dateKey]) byDate[dateKey] = { dateKey: dateKey, label: label, totalTasks: 0, participants: {} };
+        if (!byDate[dateKey]) byDate[dateKey] = { dateKey: dateKey, label: label, totalTasks: 0, studentLatest: {}, participants: {} };
         byDate[dateKey].totalTasks += tasksCount;
+        byDate[dateKey].studentLatest[name] = progress; // last row wins
         byDate[dateKey].participants[name] = true;
       }
 
@@ -277,12 +284,17 @@ function generateDashboardSheet() {
     }).sort(function(a, b) { return b.avgProgress - a.avgProgress; });
 
     const dailyStats = Object.keys(byDate).sort().map(function(k) {
+      const scores = Object.keys(byDate[k].studentLatest).map(function(n) { return byDate[k].studentLatest[n]; });
+      const avg = scores.length > 0
+        ? Math.round(scores.reduce(function(a, b) { return a + b; }, 0) / scores.length)
+        : 0;
       return {
         label: byDate[k].label,
         totalTasks: byDate[k].totalTasks,
+        avgProgress: avg,
         participants: Object.keys(byDate[k].participants).length
       };
-    });
+    }).filter(function(d) { return d.avgProgress > 0; });
 
     const totalStudents = heroStats.length;
     const avgProgress = totalRecords ? Math.round(totalProgressSum / totalRecords) : 0;
@@ -295,6 +307,11 @@ function generateDashboardSheet() {
     } else {
       dash = ss.insertSheet(DASHBOARD_NAME, 0);
     }
+
+    // Clean look: hide gridlines, set tab color, freeze title row
+    dash.setHiddenGridlines(true);
+    try { dash.setTabColor('#10b981'); } catch (e) { /* older API */ }
+    dash.setFrozenRows(2);
 
     dash.getRange('A1').setValue('📊 우리 반 SDG 히어로 대시보드')
       .setFontSize(20).setFontWeight('bold').setFontColor('#10b981');
@@ -332,19 +349,19 @@ function generateDashboardSheet() {
     }
 
     row += 2;
-    dash.getRange(row, 1).setValue('▼ 날짜별 실천 횟수')
+    dash.getRange(row, 1).setValue('▼ 날짜별 우리 반 평균 성장률')
       .setFontSize(13).setFontWeight('bold').setFontColor('#0369a1');
     row++;
-    dash.getRange(row, 1, 1, 3).setValues([['날짜', '실천 횟수', '참가자 수']])
+    dash.getRange(row, 1, 1, 4).setValues([['날짜', '평균 성장률(%)', '실천 횟수', '참여 인원']])
       .setBackground('#0369a1').setFontColor('white').setFontWeight('bold').setHorizontalAlignment('center');
     row++;
 
     const dateStartRow = row;
     if (dailyStats.length > 0) {
       const dateData = dailyStats.map(function(d) {
-        return [d.label, d.totalTasks, d.participants];
+        return [d.label, (typeof d.avgProgress === 'number' ? d.avgProgress : 0), d.totalTasks, d.participants];
       });
-      dash.getRange(row, 1, dateData.length, 3).setValues(dateData).setHorizontalAlignment('center');
+      dash.getRange(row, 1, dateData.length, 4).setValues(dateData).setHorizontalAlignment('center');
       row += dateData.length;
     }
 
@@ -354,36 +371,47 @@ function generateDashboardSheet() {
     dash.setColumnWidth(4, 130);
     dash.setColumnWidth(5, 200);
 
-    if (heroStats.length > 0) {
-      const heroChart = dash.newChart()
-        .asBarChart()
-        .addRange(dash.getRange(heroStartRow, 1, heroStats.length, 1))
-        .addRange(dash.getRange(heroStartRow, 3, heroStats.length, 1))
-        .setPosition(heroStartRow, 7, 0, 0)
-        .setOption('title', '친구별 평균 성장률 (%)')
-        .setOption('legend', { position: 'none' })
-        .setOption('width', 520)
-        .setOption('height', Math.max(220, heroStats.length * 35 + 100))
-        .setOption('colors', ['#10b981'])
-        .setOption('hAxis', { title: '평균 성장률 (%)', minValue: 0, maxValue: 100 })
-        .build();
-      dash.insertChart(heroChart);
-    }
-
+    // ─ Date chart on TOP (line chart, daily class avg growth) ─
     if (dailyStats.length > 0) {
       const dateChart = dash.newChart()
-        .asColumnChart()
+        .asLineChart()
         .addRange(dash.getRange(dateStartRow, 1, dailyStats.length, 1))
         .addRange(dash.getRange(dateStartRow, 2, dailyStats.length, 1))
-        .setPosition(dateStartRow, 7, 0, 0)
-        .setOption('title', '날짜별 실천 횟수')
+        .setPosition(4, 7, 0, 0)
+        .setOption('title', '날짜별 우리 반 평균 성장률 (%)')
         .setOption('legend', { position: 'none' })
         .setOption('width', 520)
         .setOption('height', 320)
-        .setOption('colors', ['#6366f1'])
-        .setOption('vAxis', { title: '실천 횟수', minValue: 0 })
+        .setOption('colors', ['#10b981'])
+        .setOption('curveType', 'function')
+        .setOption('pointSize', 6)
+        .setOption('lineWidth', 3)
+        .setOption('vAxis', { title: '평균 성장률 (%)', minValue: 0, maxValue: 100 })
+        .setOption('hAxis', { title: '날짜' })
         .build();
       dash.insertChart(dateChart);
+    }
+
+    // ─ Hero chart BELOW the date chart (bar chart, top 5 friends) ─
+    if (heroStats.length > 0) {
+      const chartRowCount = Math.min(5, heroStats.length);
+      const chartTitle = heroStats.length > 5
+        ? '친구별 평균 성장률 TOP 5 (%)'
+        : '친구별 평균 성장률 (%)';
+      const heroChart = dash.newChart()
+        .asBarChart()
+        .addRange(dash.getRange(heroStartRow, 1, chartRowCount, 1))
+        .addRange(dash.getRange(heroStartRow, 3, chartRowCount, 1))
+        .setPosition(22, 7, 0, 0)
+        .setOption('title', chartTitle)
+        .setOption('legend', { position: 'none' })
+        .setOption('width', 520)
+        .setOption('height', Math.max(280, chartRowCount * 55 + 120))
+        .setOption('colors', ['#10b981'])
+        .setOption('hAxis', { title: '평균 성장률 (%)', minValue: 0, maxValue: 100 })
+        .setOption('vAxis', { textStyle: { fontSize: 12, bold: true } })
+        .build();
+      dash.insertChart(heroChart);
     }
 
     ss.setActiveSheet(dash);
@@ -395,4 +423,151 @@ function generateDashboardSheet() {
     return ContentService.createTextOutput(JSON.stringify({ result: 'error', message: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ===== Spreadsheet UI: top menu + sidebar =====
+
+function onOpen(e) {
+  SpreadsheetApp.getUi()
+    .createMenu('🌍 SDG 히어로')
+    .addItem('📈 요약 통계 사이드바 열기', 'showStatsSidebar')
+    .addSeparator()
+    .addItem('🔄 대시보드 시트 새로고침', 'refreshDashboardFromMenu')
+    .addItem('📊 대시보드 시트로 이동', 'openDashboardSheet')
+    .addToUi();
+}
+
+function refreshDashboardFromMenu() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    generateDashboardSheet();
+    ui.alert('✅ 대시보드가 갱신되었습니다.');
+  } catch (err) {
+    ui.alert('❌ 오류가 발생했습니다.\n\n' + (err && err.message ? err.message : err));
+  }
+}
+
+function openDashboardSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let dash = ss.getSheetByName('📊 대시보드');
+  if (!dash) {
+    SpreadsheetApp.getUi().alert('아직 대시보드 시트가 없습니다.\n"🔄 대시보드 시트 새로고침"을 먼저 눌러주세요.');
+    return;
+  }
+  ss.setActiveSheet(dash);
+}
+
+function computeClassStats_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) return null;
+  const data = sheet.getDataRange().getValues().slice(1);
+  if (data.length === 0) return null;
+
+  const byHero = {};
+  const byDate = {};
+  let totalRecords = 0, totalProgressSum = 0, totalTasks = 0;
+
+  data.forEach(function(row) {
+    const ts = String(row[0] || '');
+    const name = row[1];
+    const progress = parseInt(row[2]) || 0;
+    const tasksStr = String(row[3] || '');
+    if (!name) return;
+    const tasksCount = tasksStr.split('\n').filter(function(t) { return t.trim().length > 0; }).length;
+
+    if (!byHero[name]) byHero[name] = { records: 0, progressSum: 0, latestProgress: 0 };
+    byHero[name].records++;
+    byHero[name].progressSum += progress;
+    byHero[name].latestProgress = progress;
+
+    const dateMatch = ts.match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+    if (dateMatch) {
+      const dateKey = dateMatch[1] + '-' + ('0' + dateMatch[2]).slice(-2) + '-' + ('0' + dateMatch[3]).slice(-2);
+      const label = parseInt(dateMatch[2], 10) + '/' + parseInt(dateMatch[3], 10);
+      if (!byDate[dateKey]) byDate[dateKey] = { label: label, totalTasks: 0, participants: {} };
+      byDate[dateKey].totalTasks += tasksCount;
+      byDate[dateKey].participants[name] = true;
+    }
+
+    totalRecords++;
+    totalProgressSum += progress;
+    totalTasks += tasksCount;
+  });
+
+  const heroStats = Object.keys(byHero).map(function(name) {
+    return { name: name, records: byHero[name].records,
+      avgProgress: Math.round(byHero[name].progressSum / byHero[name].records),
+      latestProgress: byHero[name].latestProgress };
+  }).sort(function(a, b) { return b.avgProgress - a.avgProgress; });
+
+  const dailyStats = Object.keys(byDate).sort().map(function(k) {
+    return { label: byDate[k].label, totalTasks: byDate[k].totalTasks,
+      participants: Object.keys(byDate[k].participants).length };
+  });
+
+  return {
+    totalStudents: heroStats.length,
+    totalRecords: totalRecords,
+    totalTasks: totalTasks,
+    avgProgress: totalRecords ? Math.round(totalProgressSum / totalRecords) : 0,
+    heroStats: heroStats,
+    dailyStats: dailyStats
+  };
+}
+
+function showStatsSidebar() {
+  const stats = computeClassStats_();
+  const html = HtmlService.createHtmlOutput(buildSidebarHtml_(stats))
+    .setTitle('🌍 우리 반 SDG 통계');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function buildSidebarHtml_(stats) {
+  if (!stats) {
+    return '<div style="font-family:sans-serif; padding:20px; text-align:center; color:#64748b;">아직 데이터가 없어요.<br><br>학생이 한 번이라도 저장하면<br>통계가 표시됩니다 ✨</div>';
+  }
+  const top5 = stats.heroStats.slice(0, 5);
+  const recent5 = stats.dailyStats.slice(-5);
+  const safeName = function(n) { return String(n).replace(/[<>&"]/g, function(c){return ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]);}); };
+
+  const summaryCards = [
+    { num: stats.totalStudents, label: '참여 친구', color: '#10b981' },
+    { num: stats.totalRecords, label: '전체 기록', color: '#0ea5e9' },
+    { num: stats.totalTasks, label: '실천 횟수', color: '#f59e0b' },
+    { num: stats.avgProgress + '%', label: '평균 성장', color: '#8b5cf6' }
+  ].map(function(c) {
+    return '<div style="background:white; border:1px solid #e2e8f0; border-radius:10px; padding:10px 6px; text-align:center;">' +
+      '<div style="font-size:1.4rem; font-weight:900; color:' + c.color + '; line-height:1.1;">' + c.num + '</div>' +
+      '<div style="font-size:0.7rem; color:#64748b; font-weight:700; margin-top:4px;">' + c.label + '</div>' +
+      '</div>';
+  }).join('');
+
+  const top5Html = top5.length ? top5.map(function(h, i) {
+    const medal = ['🥇','🥈','🥉','4️⃣','5️⃣'][i] || '•';
+    return '<div style="display:flex; align-items:center; gap:8px; padding:6px 8px; background:#f8fafc; border-radius:8px; margin-bottom:4px;">' +
+      '<span style="font-size:0.95rem;">' + medal + '</span>' +
+      '<span style="flex:1; font-size:0.78rem; font-weight:700; color:#0f172a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + safeName(h.name) + '</span>' +
+      '<span style="font-size:0.78rem; font-weight:900; color:#10b981;">' + h.avgProgress + '%</span>' +
+      '</div>';
+  }).join('') : '<div style="color:#94a3b8; font-size:0.78rem; text-align:center; padding:8px;">기록 없음</div>';
+
+  const recentHtml = recent5.length ? recent5.map(function(d) {
+    return '<div style="display:flex; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; margin-bottom:3px;">' +
+      '<span style="font-size:0.78rem; font-weight:700; color:#475569;">' + d.label + '</span>' +
+      '<span style="font-size:0.78rem; color:#475569;">실천 <b style="color:#0369a1;">' + d.totalTasks + '</b> · 참여 ' + d.participants + '명</span>' +
+      '</div>';
+  }).join('') : '<div style="color:#94a3b8; font-size:0.78rem; text-align:center; padding:8px;">기록 없음</div>';
+
+  return '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', \'Noto Sans KR\', sans-serif; padding:14px 12px; background:#f1f5f9; min-height:100vh; color:#0f172a;">' +
+    '<h2 style="font-size:1rem; color:#10b981; margin:0 0 10px; font-weight:900;">🌍 우리 반 현황</h2>' +
+    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:14px;">' + summaryCards + '</div>' +
+    '<h3 style="font-size:0.85rem; color:#0369a1; margin:0 0 6px; font-weight:900;">🏆 친구별 TOP 5</h3>' +
+    '<div style="margin-bottom:14px;">' + top5Html + '</div>' +
+    '<h3 style="font-size:0.85rem; color:#0369a1; margin:0 0 6px; font-weight:900;">📅 최근 5일 실천</h3>' +
+    '<div style="margin-bottom:14px;">' + recentHtml + '</div>' +
+    '<button onclick="google.script.run.withSuccessHandler(function(){ google.script.run.showStatsSidebar(); }).generateDashboardSheet()" style="width:100%; background:#10b981; color:white; border:none; border-radius:8px; padding:9px; font-weight:800; cursor:pointer; font-size:0.82rem; margin-bottom:6px;">🔄 통계 새로고침 + 대시보드 갱신</button>' +
+    '<button onclick="google.script.run.openDashboardSheet()" style="width:100%; background:white; color:#475569; border:1px solid #cbd5e1; border-radius:8px; padding:9px; font-weight:800; cursor:pointer; font-size:0.82rem;">📊 대시보드 시트로 이동</button>' +
+    '<p style="font-size:0.65rem; color:#94a3b8; text-align:center; margin-top:10px;">학생 저장 시 자동으로 갱신됩니다</p>' +
+    '</div>';
 }
