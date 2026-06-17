@@ -66,9 +66,10 @@ window.onload = () => {
         localStorage.removeItem('sdg_hero_v6');
       }
     }
-    // gasUrl priority: teacher's custom URL (localStorage) > script.js default
+    // gasUrl priority: URL param (student link) > localStorage (teacher device) > script.js default
+    const urlGasParam = new URLSearchParams(window.location.search).get('gas');
     const customGasUrl = localStorage.getItem('sdg_gas_url');
-    APP_STATE.gasUrl = customGasUrl || codeGasUrl;
+    APP_STATE.gasUrl = (urlGasParam ? decodeURIComponent(urlGasParam) : null) || customGasUrl || codeGasUrl;
 
     // Set default dates
     const today = new Date().toISOString().split('T')[0];
@@ -323,14 +324,18 @@ async function loadStudentList() {
     if (!response.ok) throw new Error('서버 응답 오류 (HTTP ' + response.status + ')');
 
     const data = await response.json();
-    if (data.students && data.students.length > 0) {
+    const list = data.studentList || data.students.map(n => ({ num: '', name: n }));
+    if (list && list.length > 0) {
       select.innerHTML = '<option value="">이름을 선택해주세요.</option>' +
-        data.students.map(name => `<option value="${name}">${name}</option>`).join('');
+        list.map(s => {
+          const label = s.num ? `${s.num}. ${s.name}` : s.name;
+          return `<option value="${label}">${label}</option>`;
+        }).join('');
 
       // Ensure no name is pre-selected
       select.value = "";
 
-      console.log("Students loaded successfully:", data.students.length);
+      console.log("Students loaded successfully:", list.length);
     } else {
       select.innerHTML = '<option value="">학생 명단이 비어 있습니다.</option>';
     }
@@ -415,12 +420,31 @@ function populateSettingsInputs() {
   const gasInput = document.getElementById('gas-url-input');
   const sheetInput = document.getElementById('spreadsheet-url-input');
   const currentEl = document.getElementById('gas-url-current');
+  const studentUrlDisplay = document.getElementById('student-url-display');
   if (gasInput) gasInput.value = APP_STATE.gasUrl || '';
   if (sheetInput) sheetInput.value = localStorage.getItem('sdg_spreadsheet_url') || '';
   if (currentEl) {
     const isCustom = !!localStorage.getItem('sdg_gas_url');
     const tag = isCustom ? '(설정값)' : '(기본값)';
     currentEl.innerText = (APP_STATE.gasUrl || '(없음)') + ' ' + tag;
+  }
+  if (studentUrlDisplay) studentUrlDisplay.value = getStudentUrl();
+}
+
+function getStudentUrl() {
+  const base = window.location.origin + window.location.pathname;
+  return base + '?gas=' + encodeURIComponent(APP_STATE.gasUrl);
+}
+
+function copyStudentUrl() {
+  const url = getStudentUrl();
+  const display = document.getElementById('student-url-display');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToast('학생용 주소가 복사되었습니다! 📋'));
+  } else if (display) {
+    display.select();
+    document.execCommand('copy');
+    showToast('학생용 주소가 복사되었습니다! 📋');
   }
 }
 
@@ -447,6 +471,8 @@ function saveGasUrl() {
   }
   localStorage.setItem('sdg_gas_url', url);
   APP_STATE.gasUrl = url;
+  const studentUrlDisplay = document.getElementById('student-url-display');
+  if (studentUrlDisplay) studentUrlDisplay.value = getStudentUrl();
   alert('✅ 본부 URL이 저장되었습니다.\n페이지를 새로고침하면 새 학급 데이터가 표시됩니다.');
 }
 
