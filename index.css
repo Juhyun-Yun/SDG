@@ -58,18 +58,28 @@ body {
 
 /* Landscape Mode for Tablet/Desktop */
 @media (min-width: 1024px) {
-  .app-container {
-    max-width: 1100px; /* Increased to use more space */
-    flex-direction: row; 
-    height: 85vh;
+  /* body를 정확히 뷰포트 높이로 고정해 페이지 레벨 스크롤 차단 */
+  body {
+    height: 100dvh;
+    min-height: unset;
+    overflow: hidden;
+    padding: 12px 16px; /* 모바일보다 여백 줄여 콘텐츠 공간 확보 */
+    align-items: center; /* 카드를 수직 중앙에 */
   }
-  
+
+  .app-container {
+    max-width: 1200px;
+    flex-direction: row;
+    height: calc(100dvh - 24px); /* body 상하 padding 합산 제외 */
+    max-height: none; /* 모바일의 900px 캡 해제 */
+  }
+
   .side-banner {
     display: flex !important;
-    width: 320px; /* Fixed width for consistency */
+    flex: 0 0 300px; /* 고정 폭, 축소 방지 */
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
-    padding: 40px;
+    padding: 36px 32px;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -90,8 +100,20 @@ body {
     pointer-events: none;
   }
 
+  /* 내부 column 래퍼도 min-height 제약 */
+  .content-col {
+    min-height: 0;
+    flex: 1;
+  }
+
   main {
     flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  /* 랜드스케이프에서 로그인 상단 여백 과도하지 않게 */
+  #step-login {
+    padding-top: 40px !important;
   }
 }
 
@@ -117,6 +139,7 @@ header h1 {
 
 main {
   flex: 1;
+  min-height: 0; /* flex 자식이 콘텐츠 크기로 팽창하지 않도록 강제 — 없으면 overflow:hidden에 잘림 */
   padding: 8px 25px;
   overflow-y: auto;
   scroll-behavior: smooth;

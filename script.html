@@ -391,7 +391,13 @@ function saveGasUrl() {
   }
   localStorage.setItem('sdg_gas_url', url);
   APP_STATE.gasUrl = url;
-  alert('✅ 본부 URL이 저장되었습니다.\n페이지를 새로고침하면 새 학급 데이터가 표시됩니다.');
+  const studentUrlDisplay = document.getElementById('student-url-display');
+  if (studentUrlDisplay) {
+    studentUrlDisplay.value = getStudentUrl();
+    studentUrlDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  showToast('✅ 본부 URL이 저장되었습니다! 아래 학생용 주소를 복사해 공유하세요.');
+  loadStudentList();
 }
 
 function saveSpreadsheetUrl() {

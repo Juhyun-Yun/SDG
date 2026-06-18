@@ -1,10 +1,30 @@
-/*
-  SDG's 리틀 히어로 - Google Apps Script Backend (code.gs)
-  1. 구글 시트에서 확장 프로그램 → Apps Script
-  2. 이 코드 전체를 붙여넣기
-  3. 배포 → 새 배포 → 웹 앱 → 액세스: 모든 사용자(Anyone)
-  4. 배포 후 웹 앱 URL을 앱 선생님 메뉴 → 설정 → 본부 URL에 붙여넣기
-*/
+/**
+ * ============================================================
+ * © 2026 GEG 화성(깊이 e끌림). All rights reserved.
+ *
+ * 본 코드는 「저작권법」상 보호받는 저작물입니다.
+ * - 복제권(제16조)·공중송신권(제18조)·배포권(제20조)은
+ *   저작권자에게 있습니다.
+ * - 정식 경로로 받은 이용자라도 코드의 무단 복제·재배포·
+ *   재판매·리브랜딩은 허용되지 않습니다.
+ * - 무단 이용 시 「저작권법」 제136조(5년 이하 징역 또는
+ *   5천만 원 이하 벌금) 및 제125조(손해배상) 적용 대상이
+ *   될 수 있습니다.
+ * - 이용 문의: bacusiki777@gmail.com, for2102@jimj.kr
+ * ============================================================
+ */
+
+// 빌드 서명
+const _BUILD_SIG = 'GEGHS-DEEPE-2026';
+
+// 출처 확인용 함수
+function getBuildInfo() {
+  return {
+    sig:   _BUILD_SIG,
+    owner: 'GEG 화성(깊이 e끌림)',
+    year:  2026
+  };
+}
 
 const SHEET_NAME        = '실천 기록';
 const SHEET_NAME_LEGACY = 'SDG_Records';   // 기존 배포 호환
@@ -42,7 +62,7 @@ function getStudentsSheet_(ss) {
 }
 
 // ══════════════════════════════════════════════
-//   doGet: 학생 명단 / 통계 / HTML 서빙
+//   doGet: 학생 명단 / 통계
 // ══════════════════════════════════════════════
 function doGet(e) {
   const params   = (e && e.parameter) || {};
@@ -57,10 +77,8 @@ function doGet(e) {
       const cellA = String(r[0] || '').trim();
       const cellB = String(r[1] || '').trim();
       if (cellB) {
-        // A=번호, B=이름 구조
         return { num: cellA || (i + 1), name: cellB };
       } else if (cellA && isNaN(cellA)) {
-        // A=이름만 있는 구조 (구버전 호환)
         return { num: i + 1, name: cellA };
       }
       return null;
@@ -385,10 +403,14 @@ function onOpen() {
     .addItem('🔄 대시보드 시트 새로고침',    'refreshDashboardFromMenu')
     .addSeparator()
     .addItem('🗑️ 기록 데이터 초기화',       'clearRecordsFromMenu')
+    .addSeparator()
+    .addItem('📋 사용 설명 만들기',          'setupGuideSheetFromMenu')
     .addToUi();
 
-  // 선생님 가이드 시트가 없으면 자동 생성
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss.getSheetByName('사용 설명')) {
+    try { setupGuideSheet(); } catch(e) {}
+  }
   if (!ss.getSheetByName(SHEET_GUIDE)) {
     try { createGuideSheet_(); } catch(e) {}
   }
@@ -621,7 +643,6 @@ function createGuideSheet_() {
 
   let r = 1;
 
-  // 헤더
   guide.getRange(r, 1, 1, 4).merge()
     .setValue('📋 SDG\'s 리틀 히어로 — 선생님 가이드')
     .setFontSize(20).setFontWeight('bold').setFontColor('#4f46e5')
@@ -635,7 +656,6 @@ function createGuideSheet_() {
   guide.setRowHeight(r, 26); r++;
   blank(r); r++;
 
-  // ─ 섹션 1 ─
   title(r, '  🚀  1단계 · 처음 시작하기 (앱-스프레드시트 연결)'); r++;
   blank(r); r++;
 
@@ -660,7 +680,6 @@ function createGuideSheet_() {
   note(r, '※ 저장 후 페이지를 새로고침(F5)하면 우리 학급 학생 명단이 표시됩니다.'); r++;
   blank(r); r++;
 
-  // ─ 섹션 2 ─
   title(r, '  👩‍🏫  2단계 · 학생 명단 관리'); r++;
   blank(r); r++;
   row2col(r,
@@ -670,7 +689,6 @@ function createGuideSheet_() {
   note(r, '※ 이름 추가·삭제 후 앱을 새로고침하면 바로 적용됩니다.'); r++;
   blank(r); r++;
 
-  // ─ 섹션 3 ─
   title(r, '  🔗  3단계 · 학생용 접속 주소 공유'); r++;
   blank(r); r++;
   row2col(r,
@@ -683,7 +701,6 @@ function createGuideSheet_() {
   r++;
   blank(r); r++;
 
-  // ─ 섹션 4 ─
   title(r, '  📊  4단계 · 데이터 확인 및 관리'); r++;
   blank(r); r++;
 
@@ -708,7 +725,6 @@ function createGuideSheet_() {
   r++;
   blank(r); r++;
 
-  // ─ 섹션 5 ─
   title(r, '  ⚠️  주의사항'); r++;
   blank(r); r++;
 
@@ -721,14 +737,257 @@ function createGuideSheet_() {
   warnings.forEach(function(w){ row2col(r, w[0], w[1]); r++; });
   blank(r); r++;
 
-  // 하단 안내
   guide.getRange(r, 1, 1, 4).merge()
     .setValue('문의 및 피드백: 앱 화면 하단 [선생님 메뉴]에서 본부 URL을 확인하거나, 학교 담당자에게 문의하세요.')
     .setFontSize(9).setFontColor('#94a3b8').setBackground('#f1f5f9')
     .setHorizontalAlignment('center').setWrap(true);
   guide.setRowHeight(r, 30);
 
-  // 가이드 시트를 맨 앞으로 이동
   ss.setActiveSheet(guide);
   ss.moveActiveSheet(1);
+}
+
+// ══════════════════════════════════════════════
+//   사용 설명 시트 생성
+// ══════════════════════════════════════════════
+function setupGuideSheet() {
+  var ss         = SpreadsheetApp.getActiveSpreadsheet();
+  var GUIDE_NAME = '사용 설명';
+  var OLD_NAMES  = ['📋 사용법', '사용 설명'];
+
+  // 1. 임시 탭 생성 (마지막 탭 삭제 오류 방지)
+  var tempName = '_sdg_tmp_' + Date.now();
+  var guide    = ss.insertSheet(tempName);
+
+  // 2. 기존 사용 안내 탭 삭제
+  OLD_NAMES.forEach(function(n) {
+    var s = ss.getSheetByName(n);
+    if (s) { try { ss.deleteSheet(s); } catch(e) {} }
+  });
+
+  // 3. 탭 이름 변경 후 첫 번째 위치로 이동
+  guide.setName(GUIDE_NAME);
+  ss.setActiveSheet(guide);
+  ss.moveActiveSheet(1);
+
+  // 4. 시트 기본 설정
+  guide.setHiddenGridlines(true);
+  try { guide.setTabColor('#10b981'); } catch(e) {}
+  guide.setColumnWidth(1, 170);
+  guide.setColumnWidth(2, 510);
+
+  // 5. 콘텐츠 배열 구성 및 행 위치 추적
+  var rows = [];
+  var sn   = 1;
+  var fmt  = {
+    titleRow:     -1,
+    sectionRows:  [],
+    tableHdrRows: [],
+    mergeRows:    [],
+    noticeRow:    -1,
+    copyrightRow: -1,
+    borderRanges: [],         // [r1, c1, r2, c2] 1-indexed
+    sidebarData:  { s: -1, e: -1 }
+  };
+
+  function push(a, b) {
+    rows.push([a === undefined ? '' : a, b === undefined ? '' : b]);
+    return rows.length;
+  }
+  function blank() { return push('', ''); }
+
+  // ── 제목 ──
+  fmt.titleRow = push("SDG's 리틀 히어로 — 시트 사용 설명", '');
+  blank();
+
+  // ── 섹션 1: 사본을 만든 뒤 설정하기 ──
+  fmt.sectionRows.push(push(sn++ + '. 사본을 만든 뒤 설정하기', ''));
+  fmt.tableHdrRows.push(push('단계', '내용'));
+  var s1s = rows.length + 1;
+  push('①',
+    'Apps Script 웹앱 배포\n' +
+    '구글 시트 상단 메뉴에서 [확장 프로그램] → [Apps Script] 클릭\n' +
+    '[배포] → [새 배포] 클릭 → 유형: 웹앱 선택\n' +
+    '액세스 권한: 반드시 "모든 사용자(Anyone)"로 설정\n' +
+    '[배포] 버튼 클릭 후 표시된 웹 앱 URL 복사');
+  push('②',
+    '앱에 배포 URL 등록\n' +
+    'GitHub Pages에 배포된 SDG 리틀 히어로 앱 접속\n' +
+    '하단 [선생님 메뉴] → [설정] 탭\n' +
+    '[본부(Apps Script) URL] 칸에 복사한 URL 붙여넣고 저장\n' +
+    '저장 후 학생 접속 주소가 자동으로 생성됩니다');
+  push('③',
+    '학생 명단 입력\n' +
+    '이 스프레드시트의 [학생 명단] 탭 클릭\n' +
+    '1행은 헤더(번호 / 이름)이므로 수정하지 마세요\n' +
+    '2행부터 A열에 번호, B열에 학생 이름을 한 명씩 입력\n' +
+    '앱 새로고침 시 학생 선택 목록에 자동 반영');
+  push('④',
+    '학생용 접속 주소 공유\n' +
+    '앱 [선생님 메뉴] → [설정] 탭 → 학생용 접속 주소 복사\n' +
+    '카카오톡·구글 클래스룸·QR코드 등으로 학생에게 공유\n' +
+    '이 주소로 접속하면 우리 학급으로 자동 연결됩니다');
+  var s1e = rows.length;
+  fmt.borderRanges.push([s1s - 1, 1, s1e, 2]);
+  blank();
+
+  // ── 섹션 2: 시트 탭 안내 ──
+  fmt.sectionRows.push(push(sn++ + '. 시트 탭 안내', ''));
+  fmt.tableHdrRows.push(push('탭 이름', '역할 및 안내'));
+  var s2s = rows.length + 1;
+  push('사용 설명',         '현재 보고 있는 시트입니다. 처음 사용할 때 참고하세요.');
+  push('학생 명단',         '학생 이름을 입력하는 시트입니다.\nA열: 번호, B열: 이름 형식으로 입력하세요.\n2행부터 한 명씩 입력하면 앱에 자동으로 반영됩니다.');
+  push('실천 기록',         '학생이 앱에서 저장한 실천 내용이 자동으로 기록됩니다.\n직접 수정하지 마세요.');
+  push('📊 대시보드',      '학급 전체 성장 통계와 차트가 자동으로 생성됩니다.\n메뉴에서 새로고침하거나 학생 저장 시 자동 갱신됩니다.');
+  push('📋 선생님 가이드', '앱 설치 및 배포 방법 상세 안내입니다. 처음 시작할 때 참고하세요.');
+  var s2e = rows.length;
+  fmt.borderRanges.push([s2s - 1, 1, s2e, 2]);
+  blank();
+
+  // ── 주의 안내 (한 번만) ──
+  fmt.noticeRow = push(
+    '⚠ 주의',
+    '데이터나 설정을 변경할 때는 앱 화면이 아니라 해당 시트 탭에서 직접 수정하세요.\n탭 이름은 코드와 연결되어 있으므로 삭제하거나 변경하지 마세요.'
+  );
+  blank();
+
+  // ── 섹션 3: 메뉴 사용 방법 ──
+  fmt.sectionRows.push(push(sn++ + '. 메뉴 사용 방법', ''));
+  fmt.mergeRows.push(push('구글 시트 상단 메뉴 [🌍 SDG 히어로]를 클릭하면 다음 기능을 사용할 수 있습니다.', ''));
+  fmt.tableHdrRows.push(push('메뉴 항목', '기능'));
+  var s3s = rows.length + 1;
+  push('📈 통계 사이드바 열기',     '참여 학생 수, 기록 수, 실천 횟수, 평균 성장률 및 친구별 TOP 5 순위를\n화면 오른쪽 사이드바로 표시합니다.');
+  push('📊 대시보드 보기',           '팝업 창에서 학급 통계 요약과 최근 7일 현황을 확인합니다.');
+  push('🔄 대시보드 시트 새로고침', '📊 대시보드 시트를 최신 데이터로 다시 생성합니다.');
+  push('🗑️ 기록 데이터 초기화',    '실천 기록 시트의 모든 내용을 삭제합니다. (복구 불가)');
+  push('📋 사용 설명 만들기',       '이 사용 설명 시트를 새로 만듭니다.');
+  var s3e = rows.length;
+  fmt.borderRanges.push([s3s - 1, 1, s3e, 2]);
+  blank();
+
+  // ── 섹션 4: 통계 사이드바 ──
+  fmt.sectionRows.push(push(sn++ + '. 통계 사이드바', ''));
+  fmt.sidebarData.s = rows.length + 1;
+  push('사용 방법',
+    '구글 시트 상단 메뉴 [🌍 SDG 히어로] → [📈 통계 사이드바 열기] 클릭\n' +
+    '시트 오른쪽에 사이드바가 열립니다.');
+  push('확인 가능한 정보',
+    '• 참여 학생 수, 전체 기록 수, 실천 횟수, 반 평균 성장률\n' +
+    '• 친구별 성장 순위 TOP 5\n' +
+    '• 최근 5일간의 실천 현황\n' +
+    '사이드바 내 [통계 새로고침 + 대시보드 갱신] 버튼으로 즉시 갱신됩니다.');
+  fmt.sidebarData.e = rows.length;
+  fmt.borderRanges.push([fmt.sidebarData.s, 1, fmt.sidebarData.e, 2]);
+  blank();
+
+  // ── 섹션 5: 교사 대시보드 ──
+  fmt.sectionRows.push(push(sn++ + '. 교사 대시보드', ''));
+  fmt.tableHdrRows.push(push('방법', '안내'));
+  var s5s = rows.length + 1;
+  push('팝업 대시보드',
+    '[🌍 SDG 히어로] → [📊 대시보드 보기] 선택\n' +
+    '참여 친구 수, 평균 성장률, 친구별 순위, 최근 7일 현황을\n팝업 창으로 확인합니다.');
+  push('대시보드 시트',
+    '[🌍 SDG 히어로] → [🔄 대시보드 시트 새로고침] 선택\n' +
+    '📊 대시보드 시트에 차트와 통계표가 생성됩니다.\n' +
+    '학생 기록이 저장될 때 자동으로 갱신됩니다 (30초 간격).');
+  var s5e = rows.length;
+  fmt.borderRanges.push([s5s - 1, 1, s5e, 2]);
+  blank();
+
+  // ── 섹션 6 (마지막): 저작권 안내 ──
+  fmt.sectionRows.push(push(sn++ + '. 저작권 안내', ''));
+  fmt.copyrightRow = push(
+    '저작권',
+    '본 구글 시트 및 관련 자료(앱, 코드, 콘텐츠 포함)의 저작권은 GEG 화성(깊이 e끌림)에게 있습니다.\n\n' +
+    '1. 본 자료는 책을 구입한 자에 한해 이용이 허락됩니다(교사일 경우는 해당 학급, 학부모일 경우 자녀). 정상 경로로 구매하거나 배포받은 이용자라 하더라도 앱 코드의 무단 수정 및 2차 배포는 허용되지 않습니다.\n\n' +
+    '2. 다음 행위를 금합니다.\n' +
+    '· 무단 복제·전송·배포·공유(타인에게 시트 링크 또는 사본 전달 포함)\n' +
+    '· 영리 목적의 사용 또는 배포(학원에서의 사용 포함)\n' +
+    '· 영리 목적의 재판매 또는 재배포\n' +
+    '· 무단 수정·편집을 통한 2차적 저작물 작성\n\n' +
+    '3. 「저작권법」 제136조(벌칙) 제1항 제1호에 따라, 저작재산권을 복제·공연·공중송신·전시·배포·대여·2차적저작물 작성의 방법으로 침해한 자는 5년 이하의 징역 또는 5천만원 이하의 벌금에 처하거나 이를 병과할 수 있습니다.\n\n' +
+    'ⓒ 2026 GEG 화성(깊이 e끌림)'
+  );
+
+  // 6. setValues() 한 번에 입력
+  var totalRows    = rows.length;
+  var contentRange = guide.getRange(1, 1, totalRows, 2);
+  contentRange.setValues(rows);
+
+  // 7. 기본 서식 (전체 영역)
+  contentRange
+    .setFontSize(10)
+    .setFontColor('#1e293b')
+    .setBackground('#ffffff')
+    .setWrap(true)
+    .setVerticalAlignment('top')
+    .setHorizontalAlignment('left');
+
+  // 8. 제목 서식
+  guide.getRange(fmt.titleRow, 1, 1, 2).merge()
+    .setFontSize(14).setFontWeight('bold').setFontColor('#10b981')
+    .setBackground('#f0fdf4').setHorizontalAlignment('center').setVerticalAlignment('middle');
+
+  // 9. 섹션 제목 서식
+  fmt.sectionRows.forEach(function(r) {
+    guide.getRange(r, 1, 1, 2).merge()
+      .setFontSize(11).setFontWeight('bold').setFontColor('#ffffff')
+      .setBackground('#10b981').setVerticalAlignment('middle');
+  });
+
+  // 10. 표 헤더 서식
+  fmt.tableHdrRows.forEach(function(r) {
+    guide.getRange(r, 1, 1, 2)
+      .setFontWeight('bold').setFontColor('#0f172a')
+      .setBackground('#d1fae5').setHorizontalAlignment('center');
+  });
+
+  // 11. 병합 행 서식 (메뉴 섹션 안내 줄)
+  fmt.mergeRows.forEach(function(r) {
+    guide.getRange(r, 1, 1, 2).merge()
+      .setFontColor('#475569').setFontStyle('italic').setBackground('#f8fafc');
+  });
+
+  // 12. 주의 안내 서식
+  if (fmt.noticeRow > 0) {
+    guide.getRange(fmt.noticeRow, 1)
+      .setFontWeight('bold').setFontColor('#92400e').setBackground('#fef9c3');
+    guide.getRange(fmt.noticeRow, 2)
+      .setBackground('#fef9c3').setFontColor('#78350f');
+  }
+
+  // 13. 저작권 행 서식
+  if (fmt.copyrightRow > 0) {
+    guide.getRange(fmt.copyrightRow, 1)
+      .setFontWeight('bold').setFontColor('#374151').setBackground('#f1f5f9');
+    guide.getRange(fmt.copyrightRow, 2)
+      .setFontColor('#374151').setBackground('#f8fafc');
+  }
+
+  // 14. 사이드바 데이터 행 서식
+  if (fmt.sidebarData.s > 0) {
+    var sdRows = fmt.sidebarData.e - fmt.sidebarData.s + 1;
+    guide.getRange(fmt.sidebarData.s, 1, sdRows, 1)
+      .setFontWeight('bold').setBackground('#f0fdf4').setFontColor('#065f46');
+    guide.getRange(fmt.sidebarData.s, 2, sdRows, 1)
+      .setBackground('#ffffff');
+  }
+
+  // 15. 표 테두리
+  fmt.borderRanges.forEach(function(br) {
+    guide.getRange(br[0], br[1], br[2] - br[0] + 1, br[3] - br[1] + 1)
+      .setBorder(true, true, true, true, true, true,
+                 '#94a3b8', SpreadsheetApp.BorderStyle.SOLID);
+  });
+}
+
+function setupGuideSheetFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  try {
+    setupGuideSheet();
+    ui.alert('✅ 사용 설명 시트가 생성되었습니다.');
+  } catch(err) {
+    ui.alert('❌ 오류\n\n' + err.toString());
+  }
 }
