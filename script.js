@@ -71,6 +71,12 @@ window.onload = () => {
     const customGasUrl = localStorage.getItem('sdg_gas_url');
     APP_STATE.gasUrl = (urlGasParam ? decodeURIComponent(urlGasParam) : null) || customGasUrl || codeGasUrl;
 
+    // 학생용 링크(?gas=...)로 접속한 경우 선생님 메뉴 숨김
+    if (urlGasParam) {
+      const btn = document.getElementById('teacher-menu-btn');
+      if (btn) btn.style.display = 'none';
+    }
+
     // Set default dates
     const today = new Date().toISOString().split('T')[0];
     const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -114,7 +120,7 @@ function openMissionPicker(themeId) {
     const textPrefix = isSelected ? '✅ ' : '';
 
     return `
-      <button class="btn task-option-btn" style="${bgStyle} color: var(--text-main); text-align: left; padding: 12px 15px; font-size: 0.95rem; margin-bottom: 5px; width: 100%; box-shadow: 0 4px 0 ${isSelected ? '#22c55e22' : theme.color + '22'};" onclick="selectTask(${themeId}, '${task}', event)">
+      <button class="btn task-option-btn" style="${bgStyle} color: var(--text-main); text-align: left; padding: 12px 15px; font-size: 0.95rem; margin-bottom: 5px; width: 100%; box-shadow: 0 4px 0 ${isSelected ? '#22c55e22' : theme.color + '22'};" onclick="selectTask(${themeId}, '${task}')">
         ${textPrefix}${idx + 1}. ${task}
       </button>
     `;
@@ -130,7 +136,7 @@ function closeMissionPicker(event) {
   document.getElementById('mission-picker-modal').style.display = 'none';
 }
 
-function selectTask(themeId, taskText, event) {
+function selectTask(themeId, taskText) {
   // Check limit (max 3)
   if (APP_STATE.selectedMissions.length >= 3) {
     showToast("이미 3개의 미션을 모두 선택하셨습니다! 😊");
@@ -318,10 +324,16 @@ function handleLogin() {
     }
 
     if (isChallengeActive) {
-      goToStep(3); // Go straight to Dashboard (Growth Records)
+      // 챌린지 진행 중 → 대시보드
+      goToStep(3);
       showToast(`${name} 히어로, 어서오세요! 오늘의 성장을 기록해볼까요? ✨`);
+    } else if (APP_STATE.selectedMissions.length > 0) {
+      // 미션은 선택됐지만 기간 미설정 또는 만료 → 요약 화면에서 기간 재설정
+      goToStep(2);
+      showToast(`${name} 히어로, 챌린지 기간을 확인하고 시작해보세요! 📅`);
     } else {
-      goToStep(1); // Move to Intro/Selection for new or finished challenges
+      // 미션 미선택 → 처음부터 시작
+      goToStep(1);
     }
   }, 800);
 }
@@ -390,6 +402,10 @@ function goToStep(step) {
     }
   }
 
+  if (step === '1.5' || step === 1.5) {
+    const nextBtn = document.getElementById('btn-next-step');
+    if (nextBtn) nextBtn.style.display = APP_STATE.selectedMissions.length > 0 ? 'block' : 'none';
+  }
   if (step === 2) {
     const goalArea = document.getElementById('my-goal');
     if (goalArea) goalArea.value = APP_STATE.myGoal || '';
@@ -461,14 +477,10 @@ function getStudentUrl() {
 
 function copyStudentUrl() {
   const url = getStudentUrl();
-  const display = document.getElementById('student-url-display');
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => showToast('학생용 주소가 복사되었습니다! 📋'));
-  } else if (display) {
-    display.select();
-    document.execCommand('copy');
-    showToast('학생용 주소가 복사되었습니다! 📋');
-  }
+  navigator.clipboard.writeText(url).then(
+    () => showToast('학생용 주소가 복사되었습니다! 📋'),
+    () => showToast('복사 실패 — 주소창에서 직접 복사해주세요.')
+  );
 }
 
 function resetGasUrlToDefault() {

@@ -32,9 +32,18 @@ const SHEET_STUDENTS    = '학생 명단';
 const SHEET_STUDENTS_LEGACY = 'Students';  // 기존 배포 호환
 const SHEET_DASHBOARD   = '📊 대시보드';
 
+// ── 영문 중복 탭 삭제 헬퍼 ──
+function deleteDupTabs_(ss, keepName, aliases) {
+  aliases.forEach(function(n) {
+    if (n === keepName) return;
+    var s = ss.getSheetByName(n);
+    if (s) { try { ss.deleteSheet(s); } catch(e) {} }
+  });
+}
+
 // ── 내부 헬퍼: 실천 기록 시트 가져오기 (없으면 생성) ──
 function getRecordsSheet_(ss, create) {
-  let sheet = ss.getSheetByName(SHEET_NAME)
+  var sheet = ss.getSheetByName(SHEET_NAME)
            || ss.getSheetByName(SHEET_NAME_LEGACY)
            || ss.getSheetByName('records');
   if (!sheet && create) {
@@ -42,13 +51,16 @@ function getRecordsSheet_(ss, create) {
     const header = sheet.getRange(1, 1, 1, 6);
     sheet.appendRow(["기록 시간", "히어로 이름", "성장 지수 (%)", "실천한 내용", "느낀 점", "나의 다짐"]);
     header.setBackground("#10b981").setFontColor("white").setFontWeight("bold");
+  } else if (sheet) {
+    if (sheet.getName() !== SHEET_NAME) sheet.setName(SHEET_NAME);
+    deleteDupTabs_(ss, SHEET_NAME, [SHEET_NAME_LEGACY, 'records']);
   }
   return sheet;
 }
 
 // ── 내부 헬퍼: 학생 명단 시트 가져오기 (없으면 생성) ──
 function getStudentsSheet_(ss) {
-  let sheet = ss.getSheetByName(SHEET_STUDENTS)
+  var sheet = ss.getSheetByName(SHEET_STUDENTS)
             || ss.getSheetByName(SHEET_STUDENTS_LEGACY)
             || ss.getSheetByName('학생명단')
             || ss.getSheetByName('명단')
@@ -59,6 +71,9 @@ function getStudentsSheet_(ss) {
     sheet.appendRow([1, "용기있는 사자"]);
     sheet.appendRow([2, "지혜로운 코끼리"]);
     sheet.getRange(1, 1, 1, 2).setBackground("#6366f1").setFontColor("white").setFontWeight("bold");
+  } else {
+    if (sheet.getName() !== SHEET_STUDENTS) sheet.setName(SHEET_STUDENTS);
+    deleteDupTabs_(ss, SHEET_STUDENTS, [SHEET_STUDENTS_LEGACY, '학생명단', '명단', 'student']);
   }
   return sheet;
 }
@@ -67,6 +82,7 @@ function getStudentsSheet_(ss) {
 //   doGet: 학생 명단 / 통계
 // ══════════════════════════════════════════════
 function doGet(e) {
+  try { renameLegacySheets_(); } catch(e_) {}
   const params   = (e && e.parameter) || {};
   const action   = params.action;
   const heroName = params.heroName;
@@ -119,6 +135,7 @@ function doGet(e) {
 //   doPost: 기록 저장 / 대시보드 생성 / 초기화
 // ══════════════════════════════════════════════
 function doPost(e) {
+  try { renameLegacySheets_(); } catch(e_) {}
   try {
     const data = JSON.parse(e.postData.contents);
     const ss   = SpreadsheetApp.getActiveSpreadsheet();
