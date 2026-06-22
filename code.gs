@@ -31,11 +31,12 @@ const SHEET_NAME_LEGACY = 'SDG_Records';   // 기존 배포 호환
 const SHEET_STUDENTS    = '학생 명단';
 const SHEET_STUDENTS_LEGACY = 'Students';  // 기존 배포 호환
 const SHEET_DASHBOARD   = '📊 대시보드';
-const SHEET_GUIDE       = '📋 선생님 가이드';
 
 // ── 내부 헬퍼: 실천 기록 시트 가져오기 (없으면 생성) ──
 function getRecordsSheet_(ss, create) {
-  let sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheetByName(SHEET_NAME_LEGACY);
+  let sheet = ss.getSheetByName(SHEET_NAME)
+           || ss.getSheetByName(SHEET_NAME_LEGACY)
+           || ss.getSheetByName('records');
   if (!sheet && create) {
     sheet = ss.insertSheet(SHEET_NAME);
     const header = sheet.getRange(1, 1, 1, 6);
@@ -50,7 +51,8 @@ function getStudentsSheet_(ss) {
   let sheet = ss.getSheetByName(SHEET_STUDENTS)
             || ss.getSheetByName(SHEET_STUDENTS_LEGACY)
             || ss.getSheetByName('학생명단')
-            || ss.getSheetByName('명단');
+            || ss.getSheetByName('명단')
+            || ss.getSheetByName('student');
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_STUDENTS);
     sheet.appendRow(["번호", "이름"]);
@@ -362,10 +364,34 @@ function jsonOut_(obj) {
 // ══════════════════════════════════════════════
 function renameLegacySheets_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const oldRecords  = ss.getSheetByName(SHEET_NAME_LEGACY);
+
+  // SDG_Records → 실천 기록
+  const oldRecords = ss.getSheetByName(SHEET_NAME_LEGACY);
   if (oldRecords && !ss.getSheetByName(SHEET_NAME)) oldRecords.setName(SHEET_NAME);
+
+  // Students → 학생 명단
   const oldStudents = ss.getSheetByName(SHEET_STUDENTS_LEGACY);
   if (oldStudents && !ss.getSheetByName(SHEET_STUDENTS)) oldStudents.setName(SHEET_STUDENTS);
+
+  // 'records' 탭: 실천 기록이 없으면 이름 변경, 있으면 삭제
+  const recordsTab = ss.getSheetByName('records');
+  if (recordsTab) {
+    if (!ss.getSheetByName(SHEET_NAME)) {
+      recordsTab.setName(SHEET_NAME);
+    } else {
+      try { ss.deleteSheet(recordsTab); } catch(e) {}
+    }
+  }
+
+  // 'student' 탭: 학생 명단이 없으면 이름 변경, 있으면 삭제
+  const studentTab = ss.getSheetByName('student');
+  if (studentTab) {
+    if (!ss.getSheetByName(SHEET_STUDENTS)) {
+      studentTab.setName(SHEET_STUDENTS);
+    } else {
+      try { ss.deleteSheet(studentTab); } catch(e) {}
+    }
+  }
 }
 
 function renameLegacySheetsFromMenu() {
@@ -410,9 +436,6 @@ function onOpen() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss.getSheetByName('사용 설명')) {
     try { setupGuideSheet(); } catch(e) {}
-  }
-  if (!ss.getSheetByName(SHEET_GUIDE)) {
-    try { createGuideSheet_(); } catch(e) {}
   }
 }
 
@@ -581,173 +604,6 @@ function buildSidebarHtml_(stats) {
 }
 
 // ══════════════════════════════════════════════
-//   선생님 가이드 시트 생성
-// ══════════════════════════════════════════════
-function createGuideSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let guide = ss.getSheetByName(SHEET_GUIDE);
-  if (guide) {
-    guide.clear();
-    guide.getCharts().forEach(function(c){ guide.removeChart(c); });
-  } else {
-    guide = ss.insertSheet(SHEET_GUIDE);
-  }
-
-  guide.setHiddenGridlines(true);
-  try { guide.setTabColor('#6366f1'); } catch(e){}
-  guide.setColumnWidth(1, 22);
-  guide.setColumnWidth(2, 320);
-  guide.setColumnWidth(3, 440);
-  guide.setColumnWidth(4, 22);
-
-  function title(row, text) {
-    guide.getRange(row, 1, 1, 4).merge()
-      .setValue(text)
-      .setFontSize(15).setFontWeight('bold').setFontColor('#ffffff')
-      .setBackground('#6366f1')
-      .setVerticalAlignment('middle').setHorizontalAlignment('left')
-      .setPaddings ? null : null;
-    guide.setRowHeight(row, 38);
-  }
-
-  function subtitle(row, text) {
-    guide.getRange(row, 2, 1, 3).merge()
-      .setValue(text)
-      .setFontSize(11).setFontWeight('bold').setFontColor('#4338ca')
-      .setBackground('#eef2ff');
-    guide.setRowHeight(row, 28);
-  }
-
-  function row2col(row, label, value) {
-    guide.getRange(row, 2).setValue(label)
-      .setFontSize(10).setFontWeight('bold').setFontColor('#374151')
-      .setBackground('#f9fafb').setVerticalAlignment('top').setWrap(true);
-    guide.getRange(row, 3).setValue(value)
-      .setFontSize(10).setFontColor('#1e293b')
-      .setBackground('#ffffff').setVerticalAlignment('top').setWrap(true);
-    guide.setRowHeight(row, 52);
-  }
-
-  function blank(row) {
-    guide.getRange(row, 1, 1, 4).setBackground('#f8fafc');
-    guide.setRowHeight(row, 10);
-  }
-
-  function note(row, text) {
-    guide.getRange(row, 2, 1, 3).merge()
-      .setValue(text)
-      .setFontSize(9.5).setFontColor('#64748b').setFontStyle('italic')
-      .setBackground('#f8fafc').setWrap(true);
-    guide.setRowHeight(row, 36);
-  }
-
-  let r = 1;
-
-  guide.getRange(r, 1, 1, 4).merge()
-    .setValue('📋 SDG\'s 리틀 히어로 — 선생님 가이드')
-    .setFontSize(20).setFontWeight('bold').setFontColor('#4f46e5')
-    .setBackground('#eef2ff').setHorizontalAlignment('center').setVerticalAlignment('middle');
-  guide.setRowHeight(r, 52); r++;
-
-  guide.getRange(r, 1, 1, 4).merge()
-    .setValue('이 시트는 앱과 구글 시트 연결, 배포, 데이터 관리 방법을 안내합니다.')
-    .setFontSize(10).setFontColor('#64748b').setBackground('#eef2ff')
-    .setHorizontalAlignment('center').setVerticalAlignment('middle');
-  guide.setRowHeight(r, 26); r++;
-  blank(r); r++;
-
-  title(r, '  🚀  1단계 · 처음 시작하기 (앱-스프레드시트 연결)'); r++;
-  blank(r); r++;
-
-  subtitle(r, '  ① 스프레드시트 사본 만들기'); r++;
-  row2col(r,
-    '방법',
-    '제공받은 SDG 리틀 히어로 템플릿 시트를 열고\n파일 → 사본 만들기 클릭\n사본 이름은 자유롭게 지정 (예: "3학년 2반 SDG 히어로")\nApps Script 코드도 자동으로 함께 복사됩니다.');
-  r++;
-
-  subtitle(r, '  ② Apps Script 배포하기'); r++;
-  row2col(r, '경로', '내 사본 시트에서\n확장 프로그램 → Apps Script'); r++;
-  row2col(r,
-    '배포 설정',
-    '우상단 [배포] → [새 배포] 클릭\n유형: 웹 앱 선택\n⚠️ 액세스 권한: 반드시 "모든 사용자(Anyone)" 설정\n   ("나만" 또는 "본인만"으로 두면 학생 데이터를 받지 못합니다!)\n[배포] 버튼 클릭 후 표시된 웹 앱 URL 복사');
-  r++;
-
-  subtitle(r, '  ③ 앱에 URL 등록하기'); r++;
-  row2col(r,
-    '경로',
-    '앱 하단 [선생님 메뉴] → 설정 탭\n→ 본부(Apps Script) URL 칸에 복사한 URL 붙여넣기 → 저장\n→ 스프레드시트 주소 칸에 이 시트의 브라우저 URL 붙여넣기 → 저장');
-  r++;
-  note(r, '※ 저장 후 페이지를 새로고침(F5)하면 우리 학급 학생 명단이 표시됩니다.'); r++;
-  blank(r); r++;
-
-  title(r, '  👩‍🏫  2단계 · 학생 명단 관리'); r++;
-  blank(r); r++;
-  row2col(r,
-    '"학생 명단" 시트 편집',
-    '이 스프레드시트의 "학생 명단" 시트를 클릭하세요.\n1행: 헤더 (A1=번호, B1=이름) — 수정하지 마세요.\n2행부터 A열에 번호, B열에 학생 이름을 한 줄씩 입력하면\n앱 로그인 화면에 자동으로 반영됩니다.');
-  r++;
-  note(r, '※ 이름 추가·삭제 후 앱을 새로고침하면 바로 적용됩니다.'); r++;
-  blank(r); r++;
-
-  title(r, '  🔗  3단계 · 학생용 접속 주소 공유'); r++;
-  blank(r); r++;
-  row2col(r,
-    '학생용 주소 확인',
-    '앱 [선생님 메뉴] → 설정 탭\n→ "학생용 접속 주소" 항목에서 주소 복사\n→ 카카오톡, 구글 클래스룸, QR코드 등으로 학생에게 공유');
-  r++;
-  row2col(r,
-    '왜 따로 공유해야 하나요?',
-    '여러 선생님이 같은 앱 주소를 공유할 때,\n학생용 주소에는 우리 학급 시트가 인코딩되어 있어서\n학생이 그 링크로 접속하면 자동으로 우리 반에 연결됩니다.');
-  r++;
-  blank(r); r++;
-
-  title(r, '  📊  4단계 · 데이터 확인 및 관리'); r++;
-  blank(r); r++;
-
-  subtitle(r, '  통계 확인'); r++;
-  row2col(r,
-    '사이드바 통계',
-    '상단 메뉴 [🌍 SDG 히어로] → [📈 통계 사이드바 열기]\n참여 친구 수, 전체 기록, 실천 횟수, 평균 성장률\nTOP 5 친구, 최근 5일 실천 현황 확인');
-  r++;
-  row2col(r,
-    '대시보드 시트',
-    '상단 메뉴 [🌍 SDG 히어로] → [🔄 대시보드 새로고침]\n→ "📊 대시보드" 시트에 자동으로 차트와 통계표 생성\n학생 기록 저장 시 자동 갱신 (30초 쓰로틀)');
-  r++;
-
-  subtitle(r, '  데이터 초기화'); r++;
-  row2col(r,
-    '기록 데이터만 삭제',
-    '상단 메뉴 [🌍 SDG 히어로] → [🗑️ 기록 데이터 초기화]\n실천 기록 시트의 모든 데이터를 삭제합니다.\n학생 명단과 대시보드 시트는 유지됩니다.\n\n또는 앱 [선생님 메뉴] → 설정 탭 → "시트 데이터 비우기"');
-  r++;
-  row2col(r,
-    '앱 기기 데이터만 삭제',
-    '앱 [선생님 메뉴] → 설정 탭 → "기기 데이터 초기화"\n해당 기기의 localStorage 데이터만 삭제됩니다.\n서버(구글 시트) 기록은 보존됩니다.');
-  r++;
-  blank(r); r++;
-
-  title(r, '  ⚠️  주의사항'); r++;
-  blank(r); r++;
-
-  const warnings = [
-    ['기록 초기화는 되돌릴 수 없습니다', '초기화 전 반드시 시트를 다운로드하거나\n중요한 데이터를 별도로 저장해두세요.'],
-    ['재배포 시 URL이 변경됩니다', 'Apps Script를 수정 후 "새 배포"를 하면 URL이 바뀝니다.\n기존 URL을 유지하려면 [배포 관리] → ✏️ 편집 → 버전: 새 버전 선택 후 배포하세요.\n같은 URL이 유지됩니다.'],
-    ['액세스 권한 확인', '"모든 사용자(Anyone)" 설정을 반드시 확인하세요.\n학교 도메인 내부로만 설정하면 학생이 개인 구글 계정으로\n접속할 수 없어 데이터가 저장되지 않습니다.'],
-    ['학생 명단 직접 편집 가능', '"학생 명단" 시트를 직접 수정하면 즉시 앱에 반영됩니다.\n학생 이름을 변경하면 기존 기록과 분리될 수 있으니\n학기 초에 한 번만 설정하는 것을 권장합니다.']
-  ];
-  warnings.forEach(function(w){ row2col(r, w[0], w[1]); r++; });
-  blank(r); r++;
-
-  guide.getRange(r, 1, 1, 4).merge()
-    .setValue('문의 및 피드백: 앱 화면 하단 [선생님 메뉴]에서 본부 URL을 확인하거나, 학교 담당자에게 문의하세요.')
-    .setFontSize(9).setFontColor('#94a3b8').setBackground('#f1f5f9')
-    .setHorizontalAlignment('center').setWrap(true);
-  guide.setRowHeight(r, 30);
-
-  ss.setActiveSheet(guide);
-  ss.moveActiveSheet(1);
-}
-
-// ══════════════════════════════════════════════
 //   사용 설명 시트 생성
 // ══════════════════════════════════════════════
 function setupGuideSheet() {
@@ -826,7 +682,11 @@ function setupGuideSheet() {
     '학생용 접속 주소 공유\n' +
     '앱 [선생님 메뉴] → [설정] 탭 → 학생용 접속 주소 복사\n' +
     '카카오톡·구글 클래스룸·QR코드 등으로 학생에게 공유\n' +
-    '이 주소로 접속하면 우리 학급으로 자동 연결됩니다');
+    '이 주소로 접속하면 우리 학급으로 자동 연결됩니다\n\n' +
+    '※ 왜 따로 공유해야 하나요?\n' +
+    '여러 선생님이 같은 앱을 사용할 때, 학생용 주소에는\n' +
+    '우리 학급 시트 정보가 포함되어 있어서 학생이\n' +
+    '그 링크로 접속하면 자동으로 우리 반에 연결됩니다.');
   var s1e = rows.length;
   fmt.borderRanges.push([s1s - 1, 1, s1e, 2]);
   blank();
@@ -839,7 +699,6 @@ function setupGuideSheet() {
   push('학생 명단',         '학생 이름을 입력하는 시트입니다.\nA열: 번호, B열: 이름 형식으로 입력하세요.\n2행부터 한 명씩 입력하면 앱에 자동으로 반영됩니다.');
   push('실천 기록',         '학생이 앱에서 저장한 실천 내용이 자동으로 기록됩니다.\n직접 수정하지 마세요.');
   push('📊 대시보드',      '학급 전체 성장 통계와 차트가 자동으로 생성됩니다.\n메뉴에서 새로고침하거나 학생 저장 시 자동 갱신됩니다.');
-  push('📋 선생님 가이드', '앱 설치 및 배포 방법 상세 안내입니다. 처음 시작할 때 참고하세요.');
   var s2e = rows.length;
   fmt.borderRanges.push([s2s - 1, 1, s2e, 2]);
   blank();

@@ -11,7 +11,7 @@ const APP_STATE = {
   progress: 0,
   currentStep: 0,
   history: [],
-  gasUrl: 'https://script.google.com/macros/s/AKfycbxDnb7Cb9h0ceBXLiojZPSshoqBBtdxnfJ5SCMOcv8laAkyQUBzTv4Hd5JhWGLBeU4B/exec'
+  gasUrl: ''
 };
 
 const THEME_DETAILS = {
@@ -239,6 +239,25 @@ function removeMission(index) {
   updateMissionSummary();
 }
 
+function resetMissionSelection() {
+  // 이미 저장된 활동 기록이 있으면 확인 후 진행
+  const hKey = 'sdg_history_' + APP_STATE.heroName;
+  const history = JSON.parse(localStorage.getItem(hKey) || '[]');
+  if (history.length > 0) {
+    if (!confirm('이미 활동 기록이 있습니다.\n미션을 다시 선택하면 기존 미션 구성이 변경됩니다.\n계속할까요?')) return;
+  }
+
+  // 선택 초기화
+  APP_STATE.selectedMissions = [];
+  saveState();
+
+  // 갤러리의 "선택한 미션 확인하기" 버튼 다시 숨김
+  const nextBtn = document.getElementById('btn-next-step');
+  if (nextBtn) nextBtn.style.display = 'none';
+
+  goToStep(1.5);
+}
+
 function handleLogin() {
   const nameSelect = document.getElementById('hero-name');
   const name = nameSelect.value;
@@ -307,42 +326,46 @@ function handleLogin() {
   }, 800);
 }
 
+function renderDefaultStudents(select) {
+  const options = Array.from({ length: 30 }, (_, i) =>
+    `<option value="학생${i + 1}">${i + 1}. 학생${i + 1}</option>`
+  ).join('');
+  select.innerHTML = '<option value="">이름을 선택해주세요.</option>' + options;
+  select.value = '';
+}
+
 async function loadStudentList() {
   const select = document.getElementById('hero-name');
   if (!select) return;
 
-  if (APP_STATE.gasUrl.includes('PASTE_YOUR_GAS_WEB_APP_URL_HERE') || !APP_STATE.gasUrl.startsWith('https')) {
-    select.innerHTML = '<option value="">서버 URL 설정이 필요합니다.</option>';
+  const hasUrl = APP_STATE.gasUrl && APP_STATE.gasUrl.startsWith('https');
+  if (!hasUrl) {
+    renderDefaultStudents(select);
     return;
   }
 
   try {
     select.innerHTML = '<option value="">명단 불러오는 중... 📡</option>';
-    console.log("Fetching from:", APP_STATE.gasUrl);
 
     const response = await fetch(APP_STATE.gasUrl + '?action=getStudents');
-    if (!response.ok) throw new Error('서버 응답 오류 (HTTP ' + response.status + ')');
+    if (!response.ok) throw new Error('HTTP ' + response.status);
 
     const data = await response.json();
-    const list = data.studentList || data.students.map(n => ({ num: '', name: n }));
+    const list = data.studentList || (data.students || []).map(n => ({ num: '', name: n }));
     if (list && list.length > 0) {
       select.innerHTML = '<option value="">이름을 선택해주세요.</option>' +
         list.map(s => {
           const label = s.num ? `${s.num}. ${s.name}` : s.name;
           return `<option value="${label}">${label}</option>`;
         }).join('');
-
-      // Ensure no name is pre-selected
-      select.value = "";
-
-      console.log("Students loaded successfully:", list.length);
+      select.value = '';
     } else {
       select.innerHTML = '<option value="">학생 명단이 비어 있습니다.</option>';
     }
   } catch (err) {
     console.error("Student load error:", err);
-    select.innerHTML = '<option value="">서버 연결 실패 (URL 확인 필요)</option>';
-    alert("명단 로딩 중 문제가 발생했습니다.\n- 구글 앱스 스크립트 배포 확인\n- 인터넷 연결 확인\n- 오류 내용: " + err.message);
+    renderDefaultStudents(select);
+    showToast('시트 연결 실패 — 기본 명단(학생1~30)으로 표시합니다.');
   }
 }
 
