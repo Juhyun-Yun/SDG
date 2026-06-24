@@ -67,10 +67,10 @@ function getStudentsSheet_(ss) {
             || ss.getSheetByName('student');
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_STUDENTS);
-    sheet.appendRow(["번호", "이름"]);
-    sheet.appendRow([1, "용기있는 사자"]);
-    sheet.appendRow([2, "지혜로운 코끼리"]);
-    sheet.getRange(1, 1, 1, 2).setBackground("#6366f1").setFontColor("white").setFontWeight("bold");
+    var defaultRows = [['번호', '이름']];
+    for (var i = 1; i <= 30; i++) defaultRows.push([i, '학생' + i]);
+    sheet.getRange(1, 1, defaultRows.length, 2).setValues(defaultRows);
+    sheet.getRange(1, 1, 1, 2).setBackground('#6366f1').setFontColor('white').setFontWeight('bold');
   } else {
     if (sheet.getName() !== SHEET_STUDENTS) sheet.setName(SHEET_STUDENTS);
     deleteDupTabs_(ss, SHEET_STUDENTS, [SHEET_STUDENTS_LEGACY, '학생명단', '명단', 'student']);
@@ -699,7 +699,7 @@ function setupGuideSheet() {
     '학생용 접속 주소 공유\n' +
     '앱 [선생님 메뉴] → [설정] 탭 → 학생용 접속 주소 복사\n' +
     '카카오톡·구글 클래스룸·QR코드 등으로 학생에게 공유\n' +
-    '이 주소로 접속하면 우리 학급으로 자동 연결됩니다\n\n' +
+    '이 주소로 접속하면 우리 학급으로 자동 연결되며, 학생 화면에는 선생님 메뉴가 보이지 않게 됩니다.\n\n' +
     '※ 왜 따로 공유해야 하나요?\n' +
     '여러 선생님이 같은 앱을 사용할 때, 학생용 주소에는\n' +
     '우리 학급 시트 정보가 포함되어 있어서 학생이\n' +

@@ -11,7 +11,8 @@ const APP_STATE = {
   progress: 0,
   currentStep: 0,
   history: [],
-  gasUrl: ''
+  gasUrl: '',
+  sheetConnected: false
 };
 
 const THEME_DETAILS = {
@@ -38,6 +39,13 @@ const THEME_DETAILS = {
 let DAILY_RATINGS = {};
 
 let STEPS = {};
+
+// ── 시트 연동 여부 판별 ──
+function isSheetConnected() {
+  return APP_STATE.gasUrl &&
+         APP_STATE.gasUrl.startsWith('https://script.google.com/') &&
+         APP_STATE.gasUrl !== 'PASTE_YOUR_GAS_WEB_APP_URL_HERE';
+}
 
 window.onload = () => {
   try {
@@ -66,13 +74,17 @@ window.onload = () => {
         localStorage.removeItem('sdg_hero_v6');
       }
     }
-    // gasUrl priority: URL param (student link) > localStorage (teacher device) > script.js default
-    const urlGasParam = new URLSearchParams(window.location.search).get('gas');
+    // gasUrl priority: #c= 해시(학생 링크) > localStorage(선생님 기기) > script.js 기본값
+    // 구형 ?gas= 링크도 하위 호환으로 지원
+    const hashGasUrl = new URLSearchParams(location.hash.replace(/^#/, '')).get('c');
+    const queryGasUrl = new URLSearchParams(location.search).get('gas');
+    const isStudentLink = !!(hashGasUrl || queryGasUrl);
     const customGasUrl = localStorage.getItem('sdg_gas_url');
-    APP_STATE.gasUrl = (urlGasParam ? decodeURIComponent(urlGasParam) : null) || customGasUrl || codeGasUrl;
+    APP_STATE.gasUrl = (hashGasUrl || (queryGasUrl ? decodeURIComponent(queryGasUrl) : null))
+                       || customGasUrl || codeGasUrl;
 
-    // 학생용 링크(?gas=...)로 접속한 경우 선생님 메뉴 숨김
-    if (urlGasParam) {
+    // 학생용 링크로 접속한 경우 선생님 메뉴 숨김
+    if (isStudentLink) {
       const btn = document.getElementById('teacher-menu-btn');
       if (btn) btn.style.display = 'none';
     }
@@ -350,8 +362,8 @@ async function loadStudentList() {
   const select = document.getElementById('hero-name');
   if (!select) return;
 
-  const hasUrl = APP_STATE.gasUrl && APP_STATE.gasUrl.startsWith('https');
-  if (!hasUrl) {
+  if (!isSheetConnected()) {
+    APP_STATE.sheetConnected = false;
     renderDefaultStudents(select);
     return;
   }
@@ -365,6 +377,7 @@ async function loadStudentList() {
     const data = await response.json();
     const list = data.studentList || (data.students || []).map(n => ({ num: '', name: n }));
     if (list && list.length > 0) {
+      APP_STATE.sheetConnected = true;
       select.innerHTML = '<option value="">이름을 선택해주세요.</option>' +
         list.map(s => {
           const label = s.num ? `${s.num}. ${s.name}` : s.name;
@@ -372,10 +385,12 @@ async function loadStudentList() {
         }).join('');
       select.value = '';
     } else {
+      APP_STATE.sheetConnected = true;
       select.innerHTML = '<option value="">학생 명단이 비어 있습니다.</option>';
     }
   } catch (err) {
     console.error("Student load error:", err);
+    APP_STATE.sheetConnected = false;
     renderDefaultStudents(select);
     showToast('시트 연결 실패 — 기본 명단(학생1~30)으로 표시합니다.');
   }
@@ -472,7 +487,7 @@ function populateSettingsInputs() {
 
 function getStudentUrl() {
   const base = window.location.origin + window.location.pathname;
-  return base + '?gas=' + encodeURIComponent(APP_STATE.gasUrl);
+  return base + '#c=' + encodeURIComponent(APP_STATE.gasUrl);
 }
 
 function copyStudentUrl() {
@@ -859,14 +874,25 @@ function updateProgress() {
 let saveTimeout;
 function debounceAutoSave() {
   clearTimeout(saveTimeout);
-  document.getElementById('save-status').innerText = '✍️ 기록을 정리 중이에요...';
+  const status = document.getElementById('save-status');
+  if (isSheetConnected()) {
+    status.innerText = '✍️ 기록을 정리 중이에요...';
+  } else {
+    status.innerText = '✍️ 기기에 저장 중...';
+  }
   saveTimeout = setTimeout(autoSave, 2000);
 }
 
 async function autoSave() {
   updateProgress();
   const status = document.getElementById('save-status');
-  status.innerHTML = '☁️ <span style="animation: pulse 1s infinite;">기록을 본부로 보내는 중...</span>';
+  const connected = isSheetConnected();
+
+  if (connected) {
+    status.innerHTML = '☁️ <span style="animation: pulse 1s infinite;">기록을 본부로 보내는 중...</span>';
+  } else {
+    status.innerHTML = '💾 기기에 저장하는 중...';
+  }
 
   const logDataTasks = APP_STATE.selectedMissions.map((m, idx) => {
     const rating = DAILY_RATINGS[idx] || 0;
@@ -888,11 +914,12 @@ async function autoSave() {
   };
 
   try {
-    if (APP_STATE.gasUrl !== 'PASTE_YOUR_GAS_WEB_APP_URL_HERE') {
-      // Send the formatted string to GAS instead of objects
+    // 시트가 연동된 경우에만 서버로 전송
+    if (connected) {
       const postData = { ...logData, tasks: tasksDisplayString };
       await fetch(APP_STATE.gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(postData) });
     }
+    // localStorage에는 항상 저장
     const hKey = 'sdg_history_' + APP_STATE.heroName;
     const currentHist = JSON.parse(localStorage.getItem(hKey) || '[]');
     const todayKey = new Date().toLocaleDateString('ko-KR');
@@ -905,11 +932,17 @@ async function autoSave() {
       if (currentHist.length > 50) currentHist.pop();
     }
     localStorage.setItem(hKey, JSON.stringify(currentHist));
-    status.innerText = '✅ 본부에 전송되었습니다!';
+
+    if (connected) {
+      status.innerText = '✅ 본부에 전송되었습니다!';
+      setTimeout(loadSidebarStats, 3000);
+    } else {
+      status.innerText = '💾 기기에 저장됨 (시트 미연동)';
+    }
     setTimeout(() => { status.innerText = ''; }, 3000);
-    // Refresh sidebar stats after a brief delay (give GAS time to process)
-    setTimeout(loadSidebarStats, 3000);
-  } catch (err) { status.innerText = '❌ 연결 실패'; }
+  } catch (err) {
+    status.innerText = connected ? '❌ 연결 실패' : '💾 기기에 저장됨 (시트 미연동)';
+  }
 }
 
 function resetChallenge() {
