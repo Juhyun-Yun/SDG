@@ -986,9 +986,55 @@ async function toggleHistory() {
     }
   }
   goToStep(4);
-  renderHistory();
+  
+  const container = document.getElementById('history-container');
+  if (container) container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">📡 본부(구글 시트)에서 기록을 불러오는 중...</div>';
+  
+  await fetchAndRenderHistory();
 }
-function renderHistory() {
+
+async function fetchAndRenderHistory() {
+  const hKey = 'sdg_history_' + APP_STATE.heroName;
+  let history = JSON.parse(localStorage.getItem(hKey) || '[]');
+  
+  if (isSheetConnected() && APP_STATE.heroName) {
+    try {
+      const res = await fetch(APP_STATE.gasUrl + '?action=getHistory&name=' + encodeURIComponent(APP_STATE.heroName));
+      if (res.ok) {
+        const text = await res.text();
+        const data = JSON.parse(text);
+        if (data.ok && data.history) {
+          history = data.history.map(item => {
+            let parsedTasks = [];
+            if (typeof item.tasks === 'string' && item.tasks.trim()) {
+               parsedTasks = item.tasks.split('\n').map(line => {
+                  const parts = line.split(',');
+                  return {
+                     theme: (parts[0] || '').trim(),
+                     task: (parts[1] || '').trim(),
+                     score: Number(parts[2] || 0),
+                     icon: '🌱'
+                  };
+               });
+            } else if (Array.isArray(item.tasks)) {
+               parsedTasks = item.tasks;
+            }
+            return { ...item, tasks: parsedTasks };
+          });
+          localStorage.setItem(hKey, JSON.stringify(history));
+        } else if (data.ok === false) {
+          alert('⚠️ 기록을 불러오는 중 서버에서 문제가 발생했습니다.\n\n구글 앱스 스크립트에서 꼭 "새 버전"으로 배포했는지 확인해주세요!\n\n상세 에러: ' + (data.error || '알 수 없음'));
+        }
+      }
+    } catch (e) {
+      console.warn("History fetch failed, using local", e);
+      alert('⚠️ 구글 시트 본부와 연결할 수 없습니다.\n\n원인: ' + e.message + '\n\n만약 지속적으로 발생한다면 앱 주소가 정확한지 [선생님 설정]에서 확인해주세요.');
+    }
+  }
+  renderHistoryUI(history);
+}
+
+function renderHistoryUI(history) {
   const container = document.getElementById('history-container');
 
   // 데모 모드에서는 누적 발자취 표시 안 함
@@ -1006,8 +1052,7 @@ function renderHistory() {
     return;
   }
 
-  const hKey = 'sdg_history_' + APP_STATE.heroName;
-  const history = JSON.parse(localStorage.getItem(hKey) || '[]');
+  // Removed local storage fetch from here as it's handled in fetchAndRenderHistory
 
   const goalElem = document.getElementById('history-display-goal');
   const visionBox = document.getElementById('history-vision-box');

@@ -45,15 +45,15 @@ function getBuildInfo() {
  ***********************************************************************/
 
 // ── 시트/폴더 이름 (원하면 바꿔도 됩니다) ──────────────────────────
-var GUIDE_SHEET  = '사용 설명'; // 따라 하기 안내 탭
 var ROSTER_SHEET = '학생 명단';        // 기본 명단 탭 이름
 // 아래 후보 중 "먼저 있는" 탭을 학생 명단으로 사용한다. (이미 만들어 둔 탭과 호환)
 var ROSTER_ALIASES = ['학생 명단', '학생명단', '명단'];
 var SUBMIT_SHEET = '실천 기록';  // 실천 기록이 쌓이는 탭 이름 (없으면 자동 생성)
+var SUBMIT_ALIASES = ['실천 기록', '실천 기록 항목', '실천기록', '제출'];
 var FOLDER_PROP_KEY = 'submitFolderId';
 
 // 앱(index.html)의 [선생님 설정] 비밀번호와 똑같이 적어주세요.
-// 이 값이 '📖 선생님 가이드' 탭에 안내로 표시됩니다.
+// 이 값이 '사용 설명' 탭에 안내로 표시됩니다.
 var TEACHER_PASSCODE = '1234';
 
 // ── 제출 탭의 열 순서 ────────────────────────────────────────────
@@ -66,14 +66,12 @@ var SUBMIT_HEADERS = [
  *====================================================================*/
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  var sub = ui.createMenu('📋 탐구활동 보고서')
-    .addItem('초기 설정 (가이드·명단·제출 탭 만들기)', 'setupSheets');
-  ui.createMenu('탐구활동 보고서')
-    .addSubMenu(sub)
+  ui.createMenu('🌱 SDG 리틀 히어로')
+    .addItem('초기 설정 (사용 설명·명단·기록 탭 만들기)', 'setupSheets')
     .addToUi();
 }
 
-// "📖 선생님 가이드", "학생 명단", "제출" 탭을 준비한다.
+// "사용 설명", "학생 명단", "기록" 탭을 준비한다.
 function setupSheets() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -90,9 +88,8 @@ function setupSheets() {
   }
 
   ensureSubmitSheet_(ss);
-  cleanupSampleRoster_(ss); // 예전에 자동 생성된 샘플 "명단" 탭 정리
 
-  var guide = ss.getSheetByName(GUIDE_SHEET);
+  var guide = ss.getSheetByName('사용 설명');
   if (guide) guide.activate();
 
   SpreadsheetApp.getUi().alert(
@@ -110,178 +107,6 @@ function getRosterSheet_(ss) {
     if (s) return s;
   }
   return null;
-}
-
-// "학생 명단"이 있는데 옛 샘플 "명단" 탭(예시 이름만 들어있거나 비어 있음)이 남아 있으면 지운다.
-// (실제 데이터가 들어 있으면 절대 지우지 않는다.)
-function cleanupSampleRoster_(ss) {
-  var real = ss.getSheetByName('학생 명단') || ss.getSheetByName('학생명단');
-  var sample = ss.getSheetByName('명단');
-  if (!real || !sample) return;
-  if (real.getSheetId() === sample.getSheetId()) return;
-
-  var vals = sample.getDataRange().getValues();
-  var names = [];
-  for (var r = 1; r < vals.length; r++) {
-    var n = String(vals[r][1] || '').trim();
-    if (n) names.push(n);
-  }
-  var SAMPLE = ['김과학', '이탐구', '박관찰'];
-  var onlySample = names.length > 0 && names.every(function (n) { return SAMPLE.indexOf(n) >= 0; });
-  if (names.length === 0 || onlySample) {
-    ss.deleteSheet(sample);
-  }
-}
-
-// 선생님이 그대로 보고 따라 할 수 있는 "색깔 가이드" 탭을 만든다.
-function ensureGuideSheet_(ss) {
-  // 구 이름 탭이 남아 있으면 삭제 후 새 이름으로 재생성
-  var oldGuide = ss.getSheetByName('📖 선생님 가이드');
-  if (oldGuide) ss.deleteSheet(oldGuide);
-
-  var sh = ss.getSheetByName(GUIDE_SHEET);
-  if (!sh) sh = ss.insertSheet(GUIDE_SHEET, 0);
-  else sh.clear();
-  ss.setActiveSheet(sh);
-  ss.moveActiveSheet(1); // 맨 앞으로
-
-  sh.setHiddenGridlines(true);
-  sh.setColumnWidth(1, 46);   // 번호/아이콘 배지
-  sh.setColumnWidth(2, 740);  // 본문
-
-  var r = 1;
-
-  // ── 제목 ──
-  band_(sh, r, '사용 설명 — 과학탐구 활동 보고서',
-    { bg: '#1A237E', fg: '#FFFFFF', size: 16, bold: true, height: 50 });
-  r++;
-  // ── 소개 ──
-  band_(sh, r, '이 보고서함은 선생님 한 분만의 것입니다. 학생 명단과 제출물(PDF·그래프)은 모두 선생님 구글 계정에만 저장돼요. 아래 4단계를 한 번만 하면 됩니다. (약 3분)',
-    { bg: '#E8EAF6', fg: '#303F9F', size: 10, height: 48 });
-  r++;
-
-  // ── 선생님 설정 비밀번호 (학생에게 비공개) ──
-  band_(sh, r, '앱 [선생님 설정] 비밀번호 :   ' + TEACHER_PASSCODE,
-    { bg: '#FFE082', fg: '#5D4037', size: 13, bold: true, height: 38 });
-  r++;
-  band_(sh, r, '학생이 설정에 들어가지 못하게 막는 비밀번호예요. 학생에게는 알려주지 마세요. (앱에서 [선생님 설정]을 열 때 입력)',
-    { bg: '#FFF8E1', fg: '#8A6D3B', size: 9, height: 26 });
-  r++;
-  r = gap_(sh, r);
-
-  // ── 단계 카드 (번호 배지 + 색 본문) ──
-  var steps = [
-    { num: '1', head: '#10B981', bodyBg: '#E8F5E9', bodyFg: '#1B5E20',
-      title: '학생 명단 입력',
-      lines: ['아래 “학생 명단” 탭에서 번호(A열)와 이름(B열)을 적습니다. 여기 적은 학생이 그대로 앱 드롭다운에 연동돼요. (팀·모둠으로 운영하면 “팀” 칸도 채우세요.)'] },
-    { num: '2', head: '#2563EB', bodyBg: '#E3F2FD', bodyFg: '#0D47A1',
-      title: 'Apps Script 열기',
-      lines: ['상단 메뉴에서  [확장 프로그램] ▸ [Apps Script]  를 누릅니다.'] },
-    { num: '3', head: '#F59E0B', bodyBg: '#FFF8E1', bodyFg: '#7A4F01',
-      title: '웹 앱으로 배포  (한 번만)',
-      lines: [
-        '①  오른쪽 위  [배포] ▸ [새 배포]',
-        '②  톱니바퀴(⚙)를 눌러 유형  “웹 앱”  선택',
-        '③  실행: “나”      /      액세스 권한: “모든 사용자”',
-        '④  [배포]  클릭',
-        '⑤  (처음이면) 권한 화면 →  [고급] ▸ [(안전하지 않음)으로 이동] ▸ [허용]',
-        '⑥  배포 후 보이는 “웹 앱 URL”(끝이 /exec)을  복사'
-      ],
-      note: '※ 내가 만든 내 시트라서 안전합니다. 이 권한 화면은 처음 한 번만 나옵니다.' },
-    { num: '4', head: '#7C3AED', bodyBg: '#F3E8FF', bodyFg: '#4A148C',
-      title: '앱에 주소 붙여넣기',
-      lines: [
-        '①  앱 주소를 엽니다.',
-        '②  첫 화면 아래쪽  [⚙ 선생님 설정]  버튼을 누릅니다. (비밀번호 입력)',
-        '③  복사한 웹 앱 URL을 붙여넣습니다.',
-        '④  [연결 테스트]를 눌러  “학생 N명”  이 나오는지 확인하고  [저장].'
-      ],
-      note: '※ 저장하면 브라우저 주소창이  「앱주소?api=…」  형태로 바뀝니다. 이것이 학생용 링크예요.' },
-    { num: '5', head: '#0EA5E9', bodyBg: '#E0F2FE', bodyFg: '#075985',
-      title: '학생에게 링크 나눠주기  (중요)',
-      lines: [
-        '①  [선생님 설정] 화면의  [학생용 링크 복사]  버튼을 누릅니다.',
-        '②  복사된 링크를 클래스룸·메신저로 학생에게 보냅니다.',
-        '③  학생은 그 링크로 들어오면 설정 없이 바로 이름 선택 화면이 떠요.'
-      ],
-      note: '※ 맨 앱 주소만 주면 학생 화면이 비어 있어요. 반드시  「?api=…」  가 붙은 학생용 링크를 주세요.' }
-  ];
-  for (var i = 0; i < steps.length; i++) {
-    r = sectionCard_(sh, r, steps[i].num, steps[i].num + '단계.  ' + steps[i].title, steps[i]);
-  }
-
-  // ── 정보 섹션 ──
-  var infos = [
-    { num: '▶', head: '#0D9488', bodyBg: '#E0F2F1', bodyFg: '#004D40',
-      title: '이제부터',
-      lines: [
-        '• 학생은 앱에서 자기 이름을 골라 보고서를 작성하고  [제출]  하면, “제출” 탭과 드라이브 폴더에 자동으로 쌓입니다.',
-        '• 학생/교실 기기에는  [학생용 링크 복사]로 받은 링크를 전달하면, 설정 화면 없이 바로 이름 선택으로 들어갑니다.',
-        '• 링크는 우리 반 전용이에요. 학생에게만 공유하고, [선생님 설정] 비밀번호는 알려주지 마세요.'
-      ] },
-    { num: '?', head: '#E11D48', bodyBg: '#FFE4E6', bodyFg: '#881337',
-      title: '자주 묻는 것',
-      lines: [
-        '• 데이터는 누가 보나요?  →  선생님 본인만. 시트도 PDF도 선생님 드라이브에 저장됩니다.',
-        '• 명단 열 순서를 바꿔도 되나요?  →  됩니다. “번호 / 이름 / 팀” 글자가 든 제목을 자동으로 찾습니다.',
-        '• 그래프가 안 보여요.  →  잠시 후 새로고침. 안 보여도 “보고서(PDF)” 링크에 전체 내용이 들어 있습니다.',
-        '• 코드를 수정했어요.  →  [배포] ▸ [배포 관리] ▸ 편집(연필) ▸ 버전 “새 버전” ▸ [배포]  해야 반영됩니다.'
-      ] }
-  ];
-  for (var k = 0; k < infos.length; k++) {
-    r = sectionCard_(sh, r, infos[k].num, infos[k].title, infos[k]);
-  }
-
-  return sh;
-}
-
-// 색 헤더 띠 + 색 본문 줄들(+선택 메모)로 한 섹션을 그린다. 다음 행 번호 반환.
-function sectionCard_(sh, r, badge, headerText, s) {
-  // 헤더 띠
-  sh.getRange(r, 1).setValue(badge)
-    .setBackground(s.head).setFontColor('#FFFFFF').setFontSize(13).setFontWeight('bold')
-    .setHorizontalAlignment('center').setVerticalAlignment('middle');
-  sh.getRange(r, 2).setValue(headerText)
-    .setBackground(s.head).setFontColor('#FFFFFF').setFontSize(12).setFontWeight('bold')
-    .setVerticalAlignment('middle').setWrap(true);
-  sh.setRowHeight(r, 32);
-  r++;
-
-  // 본문 줄들
-  for (var j = 0; j < s.lines.length; j++) {
-    sh.getRange(r, 1, 1, 2).setBackground(s.bodyBg);
-    sh.getRange(r, 2).setValue(s.lines[j])
-      .setFontColor(s.bodyFg).setFontSize(10).setVerticalAlignment('middle').setWrap(true);
-    sh.setRowHeight(r, 32);
-    r++;
-  }
-
-  // 메모(주의) 줄
-  if (s.note) {
-    sh.getRange(r, 1, 1, 2).setBackground('#FFE0B2');
-    sh.getRange(r, 2).setValue(s.note)
-      .setFontColor('#8A4B00').setFontSize(9).setFontStyle('italic')
-      .setVerticalAlignment('middle').setWrap(true);
-    sh.setRowHeight(r, 26);
-    r++;
-  }
-
-  return gap_(sh, r);
-}
-
-// A:B 한 행을 한 가지 색으로 채우고 본문을 쓴다.
-function band_(sh, r, text, o) {
-  sh.getRange(r, 1, 1, 2).setBackground(o.bg);
-  var cell = sh.getRange(r, 2).setValue(text).setVerticalAlignment('middle').setWrap(true);
-  cell.setFontColor(o.fg).setFontSize(o.size);
-  if (o.bold) cell.setFontWeight('bold');
-  sh.setRowHeight(r, o.height || 26);
-}
-
-// 얇은 간격 행
-function gap_(sh, r) {
-  sh.setRowHeight(r, 10);
-  return r + 1;
 }
 
 /*=====================================================================
@@ -340,7 +165,7 @@ function doPost(e) {
 function getRoster_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = getRosterSheet_(ss);
-  if (!sh) throw new Error('“학생 명단” 탭이 없어요. 메뉴 ▸ 탐구활동 보고서 ▸ 📋 탐구활동 보고서 ▸ 초기 설정을 눌러 주세요.');
+  if (!sh) throw new Error('“학생 명단” 탭이 없어요. 메뉴 ▸ 🌱 SDG 리틀 히어로 ▸ 초기 설정을 눌러 주세요.');
 
   var values = sh.getDataRange().getValues();
   if (values.length < 2) return [];
@@ -482,14 +307,18 @@ function getHistory_(name) {
   var colStart    = header.indexOf('시작일') >= 0 ? header.indexOf('시작일') : -1;
   var colEnd      = header.indexOf('종료일') >= 0 ? header.indexOf('종료일') : -1;
 
+  var cleanReqName = String(name || '').replace(/^\d+\.\s*/, '').trim();
+
   var out = [];
   for (var r = 1; r < values.length; r++) {
-    var rowName = String(values[r][colName] || '').trim();
-    if (!name || rowName === name) {
+    var rowNameRaw = String(values[r][colName] || '').trim();
+    var rowNameClean = rowNameRaw.replace(/^\d+\.\s*/, '').trim();
+    
+    if (!cleanReqName || rowNameRaw === name || rowNameClean === cleanReqName) {
       var ts = values[r][colTs];
       out.push({
         timestamp: (ts instanceof Date) ? ts.toLocaleString('ko-KR') : String(ts),
-        heroName: rowName,
+        heroName: rowNameClean,
         progress: colProg >= 0 ? (Number(values[r][colProg]) || 0) : 0,
         tasks: colTask >= 0 ? String(values[r][colTask] || '') : '',
         reflection: colRef < values[r].length ? String(values[r][colRef] || '') : '',
@@ -503,13 +332,16 @@ function getHistory_(name) {
   return out.reverse(); // 최신 순
 }
 
-// 실천 기록 탭을 취득 (SUBMIT_SHEET 없으면 구 탭 '\uc81c\ucd9c'도 시도)
+// 실천 기록 탭을 취득 (SUBMIT_SHEET 및 SUBMIT_ALIASES 시도)
 function getRecordSheet_(ss) {
-  var sh = ss.getSheetByName(SUBMIT_SHEET);
-  if (sh) return { sheet: sh, legacy: false };
-  // 구 탭 fallback
-  var old = ss.getSheetByName('제출');
-  if (old) return { sheet: old, legacy: true };
+  for (var i = 0; i < SUBMIT_ALIASES.length; i++) {
+    var sh = ss.getSheetByName(SUBMIT_ALIASES[i]);
+    if (sh) {
+      // '제출' 등 구형 탭이면 legacy: true
+      var isLegacy = (SUBMIT_ALIASES[i] === '제출');
+      return { sheet: sh, legacy: isLegacy };
+    }
+  }
   return null;
 }
 
@@ -541,12 +373,13 @@ function getClassStats_() {
 
   for (var r = 1; r < values.length; r++) {
     var ts = values[r][colTs];
-    var name = String(values[r][colName] || '').trim();
+    var nameRaw = String(values[r][colName] || '').trim();
+    var nameClean = nameRaw.replace(/^\d+\.\s*/, '').trim();
     var progress = colProg >= 0 ? (Number(values[r][colProg]) || 0) : 0;
     var tasks = colTask >= 0 ? String(values[r][colTask] || '') : '';
 
-    if (!name) continue;
-    nameSet[name] = true;
+    if (!nameClean) continue;
+    nameSet[nameClean] = true;
     totalRecords++;
     progressSum += progress;
 
@@ -619,4 +452,152 @@ function json_(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// "사용 설명" 탭을 만든다.
+function ensureGuideSheet_(ss) {
+  var sh = ss.getSheetByName('사용 설명');
+  if (!sh) sh = ss.insertSheet('사용 설명', 0);
+  else sh.clear();
+  ss.setActiveSheet(sh);
+  ss.moveActiveSheet(1); // 맨 앞으로
+
+  sh.setHiddenGridlines(true);
+  sh.setColumnWidth(1, 46);   // 번호/아이콘 배지
+  sh.setColumnWidth(2, 740);  // 본문
+
+  var r = 1;
+
+  // ── 제목 ──
+  band_(sh, r, '사용 설명 — SDG 리틀 히어로',
+    { bg: '#1A237E', fg: '#FFFFFF', size: 16, bold: true, height: 50 });
+  r++;
+  // ── 소개 ──
+  band_(sh, r, '학생 명단과 기록은 모두 선생님 구글 계정에만 저장돼요. 아래 4단계를 한 번만 하면 됩니다. (약 3분)',
+    { bg: '#E8EAF6', fg: '#303F9F', size: 10, height: 48 });
+  r++;
+
+  // ── 선생님 설정 비밀번호 (학생에게 비공개) ──
+  band_(sh, r, '앱 [선생님 설정] 비밀번호 :   ' + TEACHER_PASSCODE,
+    { bg: '#FFE082', fg: '#5D4037', size: 13, bold: true, height: 38 });
+  r++;
+  band_(sh, r, '학생이 설정에 들어가지 못하게 막는 비밀번호예요. 학생에게는 알려주지 마세요. (앱에서 [선생님 설정]을 열 때 입력)',
+    { bg: '#FFF8E1', fg: '#8A6D3B', size: 9, height: 26 });
+  r++;
+  r = gap_(sh, r);
+
+  // ── 단계 카드 (번호 배지 + 색 본문) ──
+  var steps = [
+    { num: '1', head: '#10B981', bodyBg: '#E8F5E9', bodyFg: '#1B5E20',
+      title: '학생 명단 입력',
+      lines: ['아래 “학생 명단” 탭에서 번호(A열)와 이름(B열)을 적습니다. 여기 적은 학생이 그대로 앱 드롭다운에 연동돼요.'] },
+    { num: '2', head: '#2563EB', bodyBg: '#E3F2FD', bodyFg: '#0D47A1',
+      title: 'Apps Script 열기',
+      lines: ['상단 메뉴에서  [확장 프로그램] ▸ [Apps Script]  를 누릅니다.'] },
+    { num: '3', head: '#F59E0B', bodyBg: '#FFF8E1', bodyFg: '#7A4F01',
+      title: '웹 앱으로 배포  (한 번만)',
+      lines: [
+        '①  오른쪽 위  [배포] ▸ [새 배포]',
+        '②  톱니바퀴(⚙)를 눌러 유형  “웹 앱”  선택',
+        '③  실행: “나”      /      액세스 권한: “모든 사용자”',
+        '④  [배포]  클릭',
+        '⑤  (처음이면) 권한 화면 →  [고급] ▸ [(안전하지 않음)으로 이동] ▸ [허용]',
+        '⑥  배포 후 보이는 “웹 앱 URL”(끝이 /exec)을  복사'
+      ],
+      note: '※ 내가 만든 내 시트라서 안전합니다. 이 권한 화면은 처음 한 번만 나옵니다.' },
+    { num: '4', head: '#7C3AED', bodyBg: '#F3E8FF', bodyFg: '#4A148C',
+      title: '앱에 주소 붙여넣기',
+      lines: [
+        '①  앱 주소를 엽니다.',
+        '②  첫 화면 아래쪽  [⚙ 선생님 설정]  버튼을 누릅니다. (비밀번호 입력)',
+        '③  복사한 웹 앱 URL을 붙여넣습니다.',
+        '④  [연결 테스트]를 눌러  “학생 N명”  이 나오는지 확인하고  [저장].'
+      ],
+      note: '※ 저장하면 브라우저 주소창이  「앱주소?api=…」  형태로 바뀝니다. 이것이 학생용 링크예요.' },
+    { num: '5', head: '#0EA5E9', bodyBg: '#E0F2FE', bodyFg: '#075985',
+      title: '학생에게 링크 나눠주기  (중요)',
+      lines: [
+        '①  [선생님 설정] 화면의  [학생용 링크 복사]  버튼을 누릅니다.',
+        '②  복사된 링크를 클래스룸·메신저로 학생에게 보냅니다.',
+        '③  학생은 그 링크로 들어오면 설정 없이 바로 이름 선택 화면이 떠요.'
+      ],
+      note: '※ 맨 앱 주소만 주면 학생 화면이 비어 있어요. 반드시  「?api=…」  가 붙은 학생용 링크를 주세요.' }
+  ];
+  for (var i = 0; i < steps.length; i++) {
+    r = sectionCard_(sh, r, steps[i].num, steps[i].num + '단계.  ' + steps[i].title, steps[i]);
+  }
+
+  // ── 정보 섹션 ──
+  var infos = [
+    { num: '▶', head: '#0D9488', bodyBg: '#E0F2F1', bodyFg: '#004D40',
+      title: '이제부터',
+      lines: [
+        '• 학생은 앱에서 실천 기록을 작성하고  [저장]  하면, “실천 기록” 탭에 자동으로 쌓입니다.',
+        '• 링크는 우리 반 전용이에요. 학생에게만 공유하고, [선생님 설정] 비밀번호는 알려주지 마세요.'
+      ] },
+    { num: '📊', head: '#E65100', bodyBg: '#FFF3E0', bodyFg: '#E65100',
+      title: '대시보드 보기',
+      lines: [
+        '• 우리 반 학생들이 기록한 통계 현황과 발자취는 앱 화면에서 한눈에 확인할 수 있습니다.',
+        '• 데이터는 “실천 기록” 탭에서 실시간으로 불러옵니다.'
+      ] },
+    { num: '?', head: '#E11D48', bodyBg: '#FFE4E6', bodyFg: '#881337',
+      title: '자주 묻는 것',
+      lines: [
+        '• 데이터는 누가 보나요?  →  선생님 본인만. 시트에만 저장됩니다.',
+        '• 명단 열 순서를 바꿔도 되나요?  →  됩니다. “번호 / 이름” 글자가 든 제목을 자동으로 찾습니다.',
+        '• 코드를 수정했어요.  →  [배포] ▸ [배포 관리] ▸ 편집(연필) ▸ 버전 “새 버전” ▸ [배포]  해야 반영됩니다.'
+      ] }
+  ];
+  for (var k = 0; k < infos.length; k++) {
+    r = sectionCard_(sh, r, infos[k].num, infos[k].title, infos[k]);
+  }
+
+  return sh;
+}
+
+// 색 헤더 띠 + 색 본문 줄들(+선택 메모)로 한 섹션을 그린다. 다음 행 번호 반환.
+function sectionCard_(sh, r, badge, headerText, s) {
+  sh.getRange(r, 1).setValue(badge)
+    .setBackground(s.head).setFontColor('#FFFFFF').setFontSize(13).setFontWeight('bold')
+    .setHorizontalAlignment('center').setVerticalAlignment('middle');
+  sh.getRange(r, 2).setValue(headerText)
+    .setBackground(s.head).setFontColor('#FFFFFF').setFontSize(12).setFontWeight('bold')
+    .setVerticalAlignment('middle').setWrap(true);
+  sh.setRowHeight(r, 32);
+  r++;
+
+  for (var j = 0; j < s.lines.length; j++) {
+    sh.getRange(r, 1, 1, 2).setBackground(s.bodyBg);
+    sh.getRange(r, 2).setValue(s.lines[j])
+      .setFontColor(s.bodyFg).setFontSize(10).setVerticalAlignment('middle').setWrap(true);
+    sh.setRowHeight(r, 32);
+    r++;
+  }
+
+  if (s.note) {
+    sh.getRange(r, 1, 1, 2).setBackground('#FFE0B2');
+    sh.getRange(r, 2).setValue(s.note)
+      .setFontColor('#8A4B00').setFontSize(9).setFontStyle('italic')
+      .setVerticalAlignment('middle').setWrap(true);
+    sh.setRowHeight(r, 26);
+    r++;
+  }
+
+  return gap_(sh, r);
+}
+
+// A:B 한 행을 한 가지 색으로 채우고 본문을 쓴다.
+function band_(sh, r, text, o) {
+  sh.getRange(r, 1, 1, 2).setBackground(o.bg);
+  var cell = sh.getRange(r, 2).setValue(text).setVerticalAlignment('middle').setWrap(true);
+  cell.setFontColor(o.fg).setFontSize(o.size);
+  if (o.bold) cell.setFontWeight('bold');
+  sh.setRowHeight(r, o.height || 26);
+}
+
+// 얇은 간격 행
+function gap_(sh, r) {
+  sh.setRowHeight(r, 10);
+  return r + 1;
 }
