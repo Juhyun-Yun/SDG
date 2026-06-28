@@ -67,10 +67,80 @@ var SUBMIT_HEADERS = [
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🌱 SDG 리틀 히어로')
+    .addItem('사이드바 열기 (간단 통계)', 'showSidebar')
+    .addSeparator()
     .addItem('대시보드 만들기', 'createDashboardTab')
     .addItem('사용 설명 만들기', 'createGuideTab')
     .addItem('명단과 기록 관련 만들기', 'createRosterAndSubmitTabs')
     .addToUi();
+}
+
+function showSidebar() {
+  var html = HtmlService.createHtmlOutput(getSidebarHtml_())
+      .setTitle('🌱 대시보드 (요약)')
+      .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function getSidebarHtml_() {
+  var stats = getClassStats_();
+  var html = '<div style="font-family: sans-serif; padding: 15px;">' +
+      '<h2 style="color: #047857; border-bottom: 2px solid #10b981; padding-bottom: 5px;">📊 반 전체 요약</h2>' +
+      '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">' +
+        '<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">' +
+          '<div style="font-size: 11px; color: #3b82f6; font-weight: bold; margin-bottom: 4px;">참여 학생 수</div>' +
+          '<div style="font-size: 18px; color: #1e3a8a; font-weight: bold;">' + stats.totalStudents + '명</div>' +
+        '</div>' +
+        '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">' +
+          '<div style="font-size: 11px; color: #16a34a; font-weight: bold; margin-bottom: 4px;">전체 실천 기록</div>' +
+          '<div style="font-size: 18px; color: #14532d; font-weight: bold;">' + stats.totalRecords + '회</div>' +
+        '</div>' +
+        '<div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">' +
+          '<div style="font-size: 11px; color: #eab308; font-weight: bold; margin-bottom: 4px;">실천 완료 미션</div>' +
+          '<div style="font-size: 18px; color: #713f12; font-weight: bold;">' + stats.totalTasks + '개</div>' +
+        '</div>' +
+        '<div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">' +
+          '<div style="font-size: 11px; color: #e11d48; font-weight: bold; margin-bottom: 4px;">평균 성장률</div>' +
+          '<div style="font-size: 18px; color: #881337; font-weight: bold;">' + stats.avgProgress + '%</div>' +
+        '</div>' +
+      '</div>';
+      
+  html += '<h3 style="color: #047857; margin-top: 20px;">🏆 학생별 실천 순위</h3>' +
+      '<ul style="list-style-type: none; padding-left: 0; font-size: 13px; margin-bottom: 20px;">';
+      
+  if (stats.studentRanking && stats.studentRanking.length > 0) {
+    var maxRank = Math.min(stats.studentRanking.length, 10);
+    for (var j = 0; j < maxRank; j++) {
+      var s = stats.studentRanking[j];
+      var medal = j === 0 ? '🥇' : (j === 1 ? '🥈' : (j === 2 ? '🥉' : '🔹'));
+      html += '<li style="background: #fffbeb; padding: 8px; margin-bottom: 5px; border-radius: 5px; border-left: 4px solid #f59e0b; display: flex; justify-content: space-between;">' +
+        '<span style="font-weight: bold; color: #1e293b;">' + medal + ' ' + s.name + '</span>' +
+        '<span style="color: #d97706; font-weight: bold;">' + s.count + '회</span>' +
+        '</li>';
+    }
+  } else {
+    html += '<li style="color: #64748b;">아직 실천한 학생이 없습니다.</li>';
+  }
+
+  html += '</ul>' +
+      '<h3 style="color: #047857;">📈 최근 일별 현황</h3>' +
+      '<table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; margin-bottom: 20px;">' +
+        '<tr style="background: #d1fae5; color: #065f46;">' +
+          '<th style="padding: 5px; border: 1px solid #a7f3d0;">날짜</th>' +
+          '<th style="padding: 5px; border: 1px solid #a7f3d0;">기록 수</th>' +
+          '<th style="padding: 5px; border: 1px solid #a7f3d0;">평균(%)</th>' +
+        '</tr>';
+  for(var i=0; i<stats.dailyStats.length; i++) {
+    var d = stats.dailyStats[i];
+    html += '<tr>' +
+      '<td style="padding: 5px; border: 1px solid #e5e7eb;">' + d.date + '</td>' +
+      '<td style="padding: 5px; border: 1px solid #e5e7eb;">' + d.records + '</td>' +
+      '<td style="padding: 5px; border: 1px solid #e5e7eb;">' + d.avgProgress + '%</td>' +
+    '</tr>';
+  }
+  html += '</table>' +
+    '</div>';
+  return html;
 }
 
 function createDashboardTab() {
@@ -114,8 +184,38 @@ function ensureDashboardSheet_(ss) {
     sh.activate();
   }
   sh.clear();
-  sh.getRange(1, 1).setValue('📊 우리 반 통계 대시보드').setFontSize(16).setFontWeight('bold');
-  sh.getRange(3, 1).setValue('※ 현재 학생들의 상세한 누적 발자취 및 통계 현황은 앱(웹) 화면에서 더 직관적으로 확인하실 수 있습니다.').setFontSize(11);
+
+  var stats = getClassStats_();
+
+  sh.getRange("A1").setValue('📊 반 전체 요약 통계').setFontSize(16).setFontWeight('bold');
+  
+  sh.getRange("A3").setValue('참여 학생 수');
+  sh.getRange("B3").setValue(stats.totalStudents + '명');
+  
+  sh.getRange("A4").setValue('전체 실천 기록');
+  sh.getRange("B4").setValue(stats.totalRecords + '회');
+  
+  sh.getRange("A5").setValue('실천 완료 미션');
+  sh.getRange("B5").setValue(stats.totalTasks + '개');
+  
+  sh.getRange("A6").setValue('평균 성장률');
+  sh.getRange("B6").setValue(stats.avgProgress + '%');
+
+  sh.getRange("A3:A6").setBackground('#f0fdf4').setFontWeight('bold').setFontColor('#166534');
+  sh.getRange("B3:B6").setBackground('#ffffff').setHorizontalAlignment('center');
+  sh.getRange("A3:B6").setBorder(true, true, true, true, true, true);
+  
+  sh.getRange("A9").setValue('🏆 학생별 상세 통계 집계표').setFontSize(13).setFontWeight('bold').setFontColor('#0f172a');
+  
+  var submitSheetName = "'" + SUBMIT_SHEET + "'";
+  var queryFormula = "=IFERROR(QUERY(" + submitSheetName + "!A:I, \"SELECT B, COUNT(A), AVG(C) WHERE B IS NOT NULL GROUP BY B ORDER BY COUNT(A) DESC LABEL B '학생 이름', COUNT(A) '전체 실천 기록', AVG(C) '평균 성장률(%)' FORMAT AVG(C) '0.0'\", 1), \"아직 실천 기록이 없습니다.\")";
+  
+  sh.getRange("A10").setFormula(queryFormula);
+  
+  sh.setColumnWidth(1, 160);
+  sh.setColumnWidth(2, 130);
+  sh.setColumnWidth(3, 130);
+  
   return sh;
 }
 
@@ -390,6 +490,8 @@ function getClassStats_() {
   var colProg = header.indexOf('달성률(%)') >= 0 ? header.indexOf('달성률(%)') : (legacy ? -1 : 2);
   var colTask = header.indexOf('실천 내용') >= 0 ? header.indexOf('실천 내용') : (legacy ? 7 : 3);
 
+  var studentMap = {};
+
   for (var r = 1; r < values.length; r++) {
     var ts = values[r][colTs];
     var nameRaw = String(values[r][colName] || '').trim();
@@ -401,10 +503,16 @@ function getClassStats_() {
     nameSet[nameClean] = true;
     totalRecords++;
     progressSum += progress;
+    
+    if (!studentMap[nameClean]) studentMap[nameClean] = 0;
+    studentMap[nameClean]++;
 
     var taskLines = tasks.split('\n').filter(function(l) { return l.trim(); });
-    if (taskLines.length > 0) totalTasks += taskLines.length;
-    else if (tasks.trim()) totalTasks++;
+    if (taskLines.length > 0) {
+      totalTasks += taskLines.length;
+    } else if (tasks.trim()) {
+      totalTasks++;
+    }
 
     var dateKey = '';
     if (ts instanceof Date) {
@@ -425,12 +533,18 @@ function getClassStats_() {
     return { date: d.date, records: d.records, avgProgress: Math.round(d.progressSum / d.records) };
   });
 
+  var studentRanking = Object.keys(studentMap).map(function(k) {
+    return { name: k, count: studentMap[k] };
+  });
+  studentRanking.sort(function(a, b) { return b.count - a.count; });
+
   return {
     totalStudents: Object.keys(nameSet).length,
     totalRecords: totalRecords,
     totalTasks: totalTasks,
     avgProgress: totalRecords > 0 ? Math.round(progressSum / totalRecords) : 0,
-    dailyStats: dailyStats.slice(-10)
+    dailyStats: dailyStats.slice(-7),
+    studentRanking: studentRanking
   };
 }
 
