@@ -67,17 +67,27 @@ var SUBMIT_HEADERS = [
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🌱 SDG 리틀 히어로')
-    .addItem('초기 설정 (사용 설명·명단·기록 탭 만들기)', 'setupSheets')
+    .addItem('대시보드 만들기', 'createDashboardTab')
+    .addItem('사용 설명 만들기', 'createGuideTab')
+    .addItem('명단과 기록 관련 만들기', 'createRosterAndSubmitTabs')
     .addToUi();
 }
 
-// "사용 설명", "학생 명단", "기록" 탭을 준비한다.
-function setupSheets() {
+function createDashboardTab() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ensureDashboardSheet_(ss);
+  SpreadsheetApp.getUi().alert('완료', '대시보드 탭이 준비되었습니다.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function createGuideTab() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ensureGuideSheet_(ss);
+  SpreadsheetApp.getUi().alert('완료', '사용 설명 탭이 준비되었습니다.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function createRosterAndSubmitTabs() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  ensureGuideSheet_(ss); // 맨 앞 탭으로
-
-  // 이미 명단 탭(학생 명단/명단 등)이 있으면 그대로 사용하고 건드리지 않는다.
   var roster = getRosterSheet_(ss);
   if (!roster) {
     roster = ss.insertSheet(ROSTER_SHEET, 1);
@@ -89,15 +99,24 @@ function setupSheets() {
 
   ensureSubmitSheet_(ss);
 
-  var guide = ss.getSheetByName('사용 설명');
-  if (guide) guide.activate();
-
   SpreadsheetApp.getUi().alert(
-    '준비 완료',
-    '”사용 설명” 탭을 그대로 보고 따라 하시면 됩니다.\n' +
-    '학생은 “' + roster.getName() + '” 탭의 명단으로 연동됩니다.',
+    '완료',
+    '학생 명단 탭과 실천 기록 탭이 준비되었습니다.',
     SpreadsheetApp.getUi().ButtonSet.OK
   );
+}
+
+function ensureDashboardSheet_(ss) {
+  var sh = ss.getSheetByName('대시보드');
+  if (!sh) {
+    sh = ss.insertSheet('대시보드', 0);
+  } else {
+    sh.activate();
+  }
+  sh.clear();
+  sh.getRange(1, 1).setValue('📊 우리 반 통계 대시보드').setFontSize(16).setFontWeight('bold');
+  sh.getRange(3, 1).setValue('※ 현재 학생들의 상세한 누적 발자취 및 통계 현황은 앱(웹) 화면에서 더 직관적으로 확인하실 수 있습니다.').setFontSize(11);
+  return sh;
 }
 
 // 명단으로 쓸 탭을 후보 이름 순서대로 찾는다. (없으면 null)
