@@ -193,13 +193,17 @@ function removeMission(index) {
   updateMissionSummary();
 }
 
-function handleLogin() {
+async function handleLogin() {
   const nameSelect = document.getElementById('hero-name');
-  const name = nameSelect.value;
+  const name = nameSelect ? nameSelect.value : '';
   if (!name) {
-    showToast("이름을 선택해주세요! 👋");
+    showToast('이름을 선택해주세요! 👋');
     return;
   }
+
+  APP_STATE.heroName = name;
+
+  // ① localStorage 복원 시도
   const configKey = 'sdg_hero_config_' + name;
   const savedConfig = localStorage.getItem(configKey);
   if (savedConfig) {
@@ -210,40 +214,84 @@ function handleLogin() {
       APP_STATE.endDate = parsed.endDate || '';
       APP_STATE.myGoal = parsed.myGoal || '';
       APP_STATE.progress = parsed.progress || 0;
-    } catch (e) {
-      console.error("Config parse error for", name, e);
-    }
-  } else {
-    APP_STATE.selectedMissions = [];
-    APP_STATE.startDate = '';
-    APP_STATE.endDate = '';
-    APP_STATE.myGoal = '';
-    APP_STATE.progress = 0;
+    } catch (e) { console.warn('Config parse error', e); }
   }
-  APP_STATE.heroName = name;
-  saveState();
+
+  // 로딩 UI
   const btn = document.querySelector('#step-login .btn');
   const loader = document.getElementById('login-loader');
   if (btn) btn.disabled = true;
-  if (loader) loader.style.display = 'block';
-  setTimeout(() => {
-    if (btn) btn.disabled = false;
-    if (loader) loader.style.display = 'none';
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let isChallengeActive = false;
-    if (APP_STATE.endDate && APP_STATE.selectedMissions.length > 0) {
-      const end = new Date(APP_STATE.endDate);
-      end.setHours(0, 0, 0, 0);
-      if (today <= end) isChallengeActive = true;
+  if (loader) { loader.style.display = 'block'; loader.innerText = '📡 기록을 불러오는 중...'; }
+
+  // ② 시트에서 기존 기록 fetch (우선순위: 시트 > localStorage)
+  let sheetHistory = [];
+  try {
+    const res = await fetch(APP_STATE.gasUrl + '?action=getHistory&name=' + encodeURIComponent(name));
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.history) && data.history.length > 0) {
+        sheetHistory = data.history;
+      }
     }
-    if (isChallengeActive) {
-      goToStep(3);
-      showToast(`${name} 히어로, 어서오세요! 오늘의 성장을 기록해볼까요? ✨`);
-    } else {
-      goToStep(1);
+  } catch (e) { console.warn('Sheet fetch on login failed', e); }
+
+  // ③ 시트에 기록이 있으면 최신 기록으로 상태 복원
+  if (sheetHistory.length > 0) {
+    const latest = sheetHistory[0]; // 최신 순 정렬됨
+
+    // missionsJson이 있으면 미션 복원
+    if (latest.missionsJson && latest.missionsJson.trim()) {
+      try {
+        const missions = JSON.parse(latest.missionsJson);
+        if (Array.isArray(missions) && missions.length > 0) {
+          APP_STATE.selectedMissions = missions;
+        }
+      } catch (e) { console.warn('missionsJson parse error', e); }
     }
-  }, 800);
+
+    // 시작일/종료일 복원 (localStorage보다 시트 우선)
+    if (latest.startDate) APP_STATE.startDate = latest.startDate;
+    if (latest.endDate)   APP_STATE.endDate   = latest.endDate;
+    if (latest.myGoal)    APP_STATE.myGoal    = latest.myGoal;
+    if (latest.progress !== undefined) APP_STATE.progress = latest.progress;
+
+    // localStorage에 저장 (다음 접속 시 빠르게 복원)
+    const configToSave = {
+      selectedMissions: APP_STATE.selectedMissions,
+      startDate: APP_STATE.startDate,
+      endDate: APP_STATE.endDate,
+      myGoal: APP_STATE.myGoal,
+      progress: APP_STATE.progress
+    };
+    localStorage.setItem(configKey, JSON.stringify(configToSave));
+  }
+
+  saveState();
+
+  if (btn) btn.disabled = false;
+  if (loader) loader.style.display = 'none';
+
+  // ④ 기존 챌린지가 활성 상태인지 확인
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let isChallengeActive = false;
+  if (APP_STATE.endDate && APP_STATE.selectedMissions.length > 0) {
+    const end = new Date(APP_STATE.endDate);
+    end.setHours(0, 0, 0, 0);
+    if (today <= end) isChallengeActive = true;
+  }
+
+  if (isChallengeActive) {
+    goToStep(3);
+    showToast(`${name} 히어로, 어서오세요! 오늘의 성장을 기록해볼까요? ✨`);
+  } else if (APP_STATE.selectedMissions.length > 0) {
+    // 챌린지 종료됐지만 미션은 있는 경우 → 새 챌린지 시작 유도
+    goToStep(3);
+    showToast(`${name} 히어로, 다시 왔군요! 🌟`);
+  } else {
+    // 시트에도 없고 localStorage에도 없는 완전 첫 접속
+    goToStep(1);
+  }
 }
 
 async function loadStudentList() {
@@ -255,24 +303,28 @@ async function loadStudentList() {
   }
   try {
     select.innerHTML = '<option value="">명단 불러오는 중... 📡</option>';
-    const response = await fetch(APP_STATE.gasUrl + '?action=getStudents');
+    // code.gs doGet은 action=getRoster 를 처리합니다.
+    const response = await fetch(APP_STATE.gasUrl + '?action=getRoster');
     if (!response.ok) throw new Error('서버 응답 오류 (HTTP ' + response.status + ')');
     const data = await response.json();
-    const list = data.studentList || data.students.map(n => ({ num: '', name: n }));
-    if (list && list.length > 0) {
+    // code.gs 응답 형식: { ok: true, students: [{id, name, team}] }
+    const rawList = data.students || data.studentList || [];
+    const list = rawList.map(s => {
+      if (typeof s === 'string') return { label: s, value: s };
+      const label = s.id ? `${s.id}. ${s.name}` : s.name;
+      return { label, value: label };
+    });
+    if (data.ok && list.length > 0) {
       select.innerHTML = '<option value="">이름을 선택해주세요.</option>' +
-        list.map(s => {
-          const label = s.num ? `${s.num}. ${s.name}` : s.name;
-          return `<option value="${label}">${label}</option>`;
-        }).join('');
-      select.value = "";
+        list.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+      select.value = APP_STATE.heroName || '';
     } else {
       select.innerHTML = '<option value="">학생 명단이 비어 있습니다.</option>';
     }
   } catch (err) {
     console.error("Student load error:", err);
     select.innerHTML = '<option value="">서버 연결 실패 (URL 확인 필요)</option>';
-    alert("명단 로딩 중 문제가 발생했습니다.\n- 구글 앱스 스크립트 배포 확인\n- 인터넷 연결 확인\n- 오류 내용: " + err.message);
+    showToast('명단 로딩 실패: ' + err.message);
   }
 }
 
@@ -679,7 +731,7 @@ async function autoSave() {
   };
   try {
     if (APP_STATE.gasUrl !== 'PASTE_YOUR_GAS_WEB_APP_URL_HERE') {
-      const postData = { ...logData, tasks: tasksDisplayString };
+      const postData = { action: 'saveRecord', ...logData, tasks: tasksDisplayString };
       await fetch(APP_STATE.gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(postData) });
     }
     const hKey = 'sdg_history_' + APP_STATE.heroName;
@@ -724,66 +776,95 @@ async function toggleHistory() {
     }
   }
   goToStep(4);
-  renderHistory();
+  await renderHistory();
 }
-function renderHistory() {
-  const hKey = 'sdg_history_' + APP_STATE.heroName;
-  const history = JSON.parse(localStorage.getItem(hKey) || '[]');
+async function renderHistory() {
   const container = document.getElementById('history-container');
-  const goalElem = document.getElementById('history-display-goal');
+  const chartContainer = document.getElementById('history-chart-container');
   const visionBox = document.getElementById('history-vision-box');
+  const goalElem = document.getElementById('history-display-goal');
+
+  if (container) container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">&#128225; 히어로 발자취를 불러오는 중...</div>';
+
+  let history = [];
+
+  // 시트에서 이력 fetch (getHistory)
+  try {
+    const res = await fetch(APP_STATE.gasUrl + '?action=getHistory&name=' + encodeURIComponent(APP_STATE.heroName));
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.history) && data.history.length > 0) {
+        history = data.history;
+      }
+    }
+  } catch(e) {
+    console.warn('Sheet history fetch failed, using localStorage', e);
+  }
+
+  // 시트에 없으면 localStorage 활용
+  if (history.length === 0) {
+    const hKey = 'sdg_history_' + APP_STATE.heroName;
+    history = JSON.parse(localStorage.getItem(hKey) || '[]');
+  }
+
   if (APP_STATE.myGoal) {
     if (goalElem) goalElem.innerText = APP_STATE.myGoal;
     if (visionBox) visionBox.style.display = 'flex';
   } else {
     if (visionBox) visionBox.style.display = 'none';
   }
+
   if (history.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">아직 기록이 없어요. 오늘의 행동을 먼저 기록해보세요!</div>';
-    document.getElementById('history-chart-container').innerHTML = '';
+    if (container) container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">아직 기록이 없어요. 오늘의 행동을 먼저 기록해보세요!</div>';
+    if (chartContainer) chartContainer.innerHTML = '';
     return;
   }
-  container.innerHTML = history.map(item => {
-    const tasks = Array.isArray(item.tasks) ? item.tasks : [];
+
+  if (container) container.innerHTML = history.map(function(item) {
+    // tasks: 배열(localStorage) 또는 줄바꿈 문자열(시트) 둘 다 처리
+    let tasks = [];
+    if (Array.isArray(item.tasks)) {
+      tasks = item.tasks;
+    } else if (typeof item.tasks === 'string' && item.tasks.trim()) {
+      tasks = item.tasks.split('\n').map(function(line) {
+        const parts = line.split(', ');
+        const theme = parts[0] || '';
+        const score = parts.length > 1 ? parts[parts.length - 1] : '0';
+        const task = parts.length > 2 ? parts.slice(1, -1).join(', ') : (parts[1] || '');
+        return { icon: '', theme, task, score };
+      }).filter(function(t) { return t.theme; });
+    }
+    const taskRows = tasks.map(t =>
+      `<tr style="border-bottom: 1px solid #f8fafc;">
+        <td style="padding: 12px; font-weight: 700; color: var(--primary); font-size: 0.8rem; text-align: center; word-break: keep-all; line-height: 1.3;">${t.icon || ''} ${t.theme}</td>
+        <td style="padding: 12px; color: var(--text-main); font-weight: 700; line-height: 1.3;">${t.task}</td>
+        <td style="padding: 12px; text-align: center; font-size: 0.9rem; font-weight: 800; color: #ef4444;">${t.score}점</td>
+      </tr>`
+    ).join('');
+    const reflectionRow = item.reflection
+      ? `<tfoot><tr><td colspan="3" style="padding: 15px 20px; background: #fffbeb; color: #92400e; font-size: 0.85rem; border-top: 1px solid #fef3c7;">
+           <div style="display: flex; gap: 10px; align-items: baseline;">
+             <span style="font-weight: 900; color: #b45309; font-size: 0.75rem; white-space: nowrap;">&#128172; 히어로 한 마디:</span>
+             <span style="font-weight: 500; color: #78350f; line-height: 1.5;">${item.reflection}</span>
+           </div></td></tr></tfoot>` : '';
     return `
-    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 25px; border: 1px solid #e2e8f0;">
-      <div style="background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 0.8rem; color: #64748b; font-weight: 800;">🕒 ${item.timestamp}</span>
-        <span style="background: var(--primary); color: white; padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">성장 ${item.progress}%</span>
-      </div>
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-        <thead>
-          <tr style="background: #fff; border-bottom: 1px solid #f1f5f9;">
+      <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+        <div style="background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.8rem; color: #64748b; font-weight: 800;">&#128338; ${item.timestamp}</span>
+          <span style="background: var(--primary); color: white; padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">성장 ${item.progress}%</span>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <thead><tr style="background: #fff; border-bottom: 1px solid #f1f5f9;">
             <th style="padding: 12px; text-align: center; color: #94a3b8; font-size: 0.75rem; width: 35%;">주제</th>
             <th style="padding: 12px; text-align: left; color: #94a3b8; font-size: 0.75rem;">실천 내용</th>
             <th style="padding: 12px; text-align: center; color: #94a3b8; font-size: 0.75rem; width: 20%;">점수</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tasks.map(t => `
-            <tr style="border-bottom: 1px solid #f8fafc;">
-              <td style="padding: 12px; font-weight: 700; color: var(--primary); font-size: 0.8rem; text-align: center; word-break: keep-all; line-height: 1.3;">${t.icon} ${t.theme}</td>
-              <td style="padding: 12px; color: var(--text-main); font-weight: 700; line-height: 1.3;">${t.task}</td>
-              <td style="padding: 12px; text-align: center; font-size: 0.9rem; font-weight: 800; color: #ef4444;">${t.score}점</td>
-            </tr>
-          `).join('')}
-        </tbody>
-        ${item.reflection ? `
-          <tfoot>
-            <tr>
-              <td colspan="3" style="padding: 15px 20px; background: #fffbeb; color: #92400e; font-size: 0.85rem; border-top: 1px solid #fef3c7;">
-                <div style="display: flex; gap: 10px; align-items: baseline;">
-                  <span style="font-weight: 900; color: #b45309; font-size: 0.75rem; white-space: nowrap;">💬 히어로 한 마디:</span>
-                  <span style="font-weight: 500; color: #78350f; line-height: 1.5;">${item.reflection}</span>
-                </div>
-              </td>
-            </tr>
-          </tfoot>
-        ` : ''}
-      </table>
-    </div>
-  `;
+          </tr></thead>
+          <tbody>${taskRows}</tbody>
+          ${reflectionRow}
+        </table>
+      </div>`;
   }).join('');
+
   renderHistoryChart(history);
 }
 

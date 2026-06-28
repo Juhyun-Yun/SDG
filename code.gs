@@ -27,21 +27,21 @@ function getBuildInfo() {
 }
 
 /***********************************************************************
- * 과학탐구 활동 보고서 — 선생님 시트 연동 스크립트 (Code.gs)
+ * SDG's 리틀 히어로 — 선생님 시트 연동 스크립트 (Code.gs)
  * ---------------------------------------------------------------------
  * 이 스크립트는 "선생님 본인의 스프레드시트"에 들어 있는 코드입니다.
  * 자기 시트만 읽고 쓰므로, 다른 사람의 데이터에는 접근하지 않습니다.
  *
  * [선생님이 한 번만 하는 일]
  *   1) 이 시트를 "사본 만들기" 해서 내 드라이브에 가져온다.
- *   2) "학생 명단" 탭에 번호(A열)·이름(B열)을 적는다. (필요하면 팀)
+ *   2) "학생 명단" 탭에 번호(A열)·이름(B열)을 적는다.
  *   3) 상단 메뉴 ▸ 확장 프로그램 ▸ Apps Script ▸ 배포 ▸ 새 배포
  *        ▸ 유형 "웹 앱" ▸ 실행 "나" ▸ 액세스 "모든 사용자" ▸ 배포
  *        ▸ (처음이면) 권한 검토 ▸ 고급 ▸ "(안전하지 않음)으로 이동"
  *   4) 나온 "웹 앱 URL"(끝이 /exec)을 복사해 앱의 [선생님 설정]에 붙여넣는다.
  *
  * ※ 코드를 수정한 경우에는 [배포 ▸ 배포 관리 ▸ 편집(연필) ▸ 버전 "새 버전" ▸ 배포]
- *   를 해야 변경이 반영됩니다. (수정하지 않으면 그대로 두면 됩니다.)
+ *   를 해야 변경이 반영됩니다.
  ***********************************************************************/
 
 // ── 시트/폴더 이름 (원하면 바꿔도 됩니다) ──────────────────────────
@@ -49,7 +49,7 @@ var GUIDE_SHEET  = '사용 설명'; // 따라 하기 안내 탭
 var ROSTER_SHEET = '학생 명단';        // 기본 명단 탭 이름
 // 아래 후보 중 "먼저 있는" 탭을 학생 명단으로 사용한다. (이미 만들어 둔 탭과 호환)
 var ROSTER_ALIASES = ['학생 명단', '학생명단', '명단'];
-var SUBMIT_SHEET = '제출';   // 제출물이 기록되는 탭 이름 (없으면 자동 생성)
+var SUBMIT_SHEET = '실천 기록';  // 실천 기록이 쌓이는 탭 이름 (없으면 자동 생성)
 var FOLDER_PROP_KEY = 'submitFolderId';
 
 // 앱(index.html)의 [선생님 설정] 비밀번호와 똑같이 적어주세요.
@@ -58,7 +58,7 @@ var TEACHER_PASSCODE = '1234';
 
 // ── 제출 탭의 열 순서 ────────────────────────────────────────────
 var SUBMIT_HEADERS = [
-  '제출시각', '번호', '이름', '팀', '모드', '활동유형', '제목', '내용', '보고서(PDF)', '그래프'
+  '기록시각', '이름', '달성률(%)', '실천 내용', '오늘의 한마디', '나의 다짐', '미션설정(JSON)', '시작일', '종료일'
 ];
 
 /*=====================================================================
@@ -293,6 +293,13 @@ function doGet(e) {
     if (action === 'getRoster' || action === 'getStudents') {
       return json_({ ok: true, students: getRoster_() });
     }
+    if (action === 'getHistory') {
+      var name = (e && e.parameter && e.parameter.name) || '';
+      return json_({ ok: true, history: getHistory_(name) });
+    }
+    if (action === 'getClassStats') {
+      return json_({ ok: true, stats: getClassStats_() });
+    }
     if (action === 'ping') {
       return json_({ ok: true, pong: true });
     }
@@ -312,6 +319,9 @@ function doPost(e) {
 
     if (action === 'uploadImage') {
       return json_(uploadImage_(body));
+    }
+    if (action === 'saveRecord') {
+      return json_(saveRecord_(body));
     }
     if (action === 'saveReport') {
       return json_(saveReport_(body));
@@ -422,6 +432,156 @@ function saveReport_(p) {
   return { ok: true };
 }
 
+// SDG 히어로 실천 기록을 '실천 기록' 탭에 한 줄 추가 → {ok}
+function saveRecord_(p) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ensureSubmitSheet_(ss);
+
+  var tasks = p.tasks || '';
+  if (Array.isArray(tasks)) {
+    tasks = tasks.map(function(t) {
+      return (t.theme || '') + ', ' + (t.task || '') + ', ' + (t.score || 0);
+    }).join('\n');
+  }
+
+  var row = [
+    new Date(),
+    p.heroName || '',
+    Number(p.progress) || 0,
+    String(tasks),
+    p.reflection || '',
+    p.myGoal || '',
+    p.missionsJson || '',  // 미션설정(JSON) - 상태 복원용
+    p.startDate || '',     // 시작일
+    p.endDate || ''        // 종료일
+  ];
+  sh.appendRow(row);
+  return { ok: true };
+}
+
+// '실천 기록' 탭(없으면 '제출' 탭)에서 특정 학생의 기록을 반환 (최신 순)
+function getHistory_(name) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var shInfo = getRecordSheet_(ss);
+  if (!shInfo) return [];
+  var sh = shInfo.sheet;
+  var legacy = shInfo.legacy;
+
+  var values = sh.getDataRange().getValues();
+  if (values.length < 2) return [];
+
+  // 헤더 기반 컬럼 자동 매핑
+  var header = values[0].map(function(h) { return String(h).trim(); });
+  var colTs   = header.indexOf('기록시각') >= 0 ? header.indexOf('기록시각') : 0;
+  var colName = header.indexOf('이름')     >= 0 ? header.indexOf('이름')     : (legacy ? 2 : 1);
+  var colProg = header.indexOf('달성률(%)') >= 0 ? header.indexOf('달성률(%)') : (legacy ? -1 : 2);
+  var colTask = header.indexOf('실천 내용') >= 0 ? header.indexOf('실천 내용') : (legacy ? 7 : 3);
+  var colRef  = header.indexOf('오늘의 한마디') >= 0 ? header.indexOf('오늘의 한마디') : 4;
+  var colGoal = header.indexOf('나의 다짐') >= 0 ? header.indexOf('나의 다짐') : 5;
+  var colMissions = header.indexOf('미션설정(JSON)') >= 0 ? header.indexOf('미션설정(JSON)') : -1;
+  var colStart    = header.indexOf('시작일') >= 0 ? header.indexOf('시작일') : -1;
+  var colEnd      = header.indexOf('종료일') >= 0 ? header.indexOf('종료일') : -1;
+
+  var out = [];
+  for (var r = 1; r < values.length; r++) {
+    var rowName = String(values[r][colName] || '').trim();
+    if (!name || rowName === name) {
+      var ts = values[r][colTs];
+      out.push({
+        timestamp: (ts instanceof Date) ? ts.toLocaleString('ko-KR') : String(ts),
+        heroName: rowName,
+        progress: colProg >= 0 ? (Number(values[r][colProg]) || 0) : 0,
+        tasks: colTask >= 0 ? String(values[r][colTask] || '') : '',
+        reflection: colRef < values[r].length ? String(values[r][colRef] || '') : '',
+        myGoal: colGoal < values[r].length ? String(values[r][colGoal] || '') : '',
+        missionsJson: colMissions >= 0 ? String(values[r][colMissions] || '') : '',
+        startDate: colStart >= 0 ? String(values[r][colStart] || '') : '',
+        endDate: colEnd >= 0 ? String(values[r][colEnd] || '') : ''
+      });
+    }
+  }
+  return out.reverse(); // 최신 순
+}
+
+// 실천 기록 탭을 취득 (SUBMIT_SHEET 없으면 구 탭 '\uc81c\ucd9c'도 시도)
+function getRecordSheet_(ss) {
+  var sh = ss.getSheetByName(SUBMIT_SHEET);
+  if (sh) return { sheet: sh, legacy: false };
+  // 구 탭 fallback
+  var old = ss.getSheetByName('제출');
+  if (old) return { sheet: old, legacy: true };
+  return null;
+}
+
+// 우리 반 전체 현황 통계 집계 → stats 객체
+function getClassStats_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var shInfo = getRecordSheet_(ss);
+  if (!shInfo) return { totalStudents: 0, totalRecords: 0, totalTasks: 0, avgProgress: 0, dailyStats: [] };
+  var sh = shInfo.sheet;
+  var legacy = shInfo.legacy;
+
+  var values = sh.getDataRange().getValues();
+  if (values.length < 2) return { totalStudents: 0, totalRecords: 0, totalTasks: 0, avgProgress: 0, dailyStats: [] };
+
+  var nameSet = {};
+  var totalRecords = 0;
+  var totalTasks = 0;
+  var progressSum = 0;
+  var dailyMap = {};
+
+  // 코럼 인덱스: 간단하게 헤더로 스마트하게 매핑
+  // 새 탭: ['기록시각', '이름', '달성률(%)', '실천 내용', '오늘의 한마디', '나의 다짐']
+  // 구 탭: ['제출시각', '번호', '이름', '팀', ...]
+  var header = values[0].map(function(h) { return String(h).trim(); });
+  var colTs   = header.indexOf('기록시각') >= 0 ? header.indexOf('기록시각') : 0;
+  var colName = header.indexOf('이름') >= 0 ? header.indexOf('이름') : (legacy ? 2 : 1);
+  var colProg = header.indexOf('달성률(%)') >= 0 ? header.indexOf('달성률(%)') : (legacy ? -1 : 2);
+  var colTask = header.indexOf('실천 내용') >= 0 ? header.indexOf('실천 내용') : (legacy ? 7 : 3);
+
+  for (var r = 1; r < values.length; r++) {
+    var ts = values[r][colTs];
+    var name = String(values[r][colName] || '').trim();
+    var progress = colProg >= 0 ? (Number(values[r][colProg]) || 0) : 0;
+    var tasks = colTask >= 0 ? String(values[r][colTask] || '') : '';
+
+    if (!name) continue;
+    nameSet[name] = true;
+    totalRecords++;
+    progressSum += progress;
+
+    var taskLines = tasks.split('\n').filter(function(l) { return l.trim(); });
+    if (taskLines.length > 0) totalTasks += taskLines.length;
+    else if (tasks.trim()) totalTasks++;
+
+    var dateKey = '';
+    if (ts instanceof Date) {
+      dateKey = (ts.getMonth() + 1) + '/' + ts.getDate();
+    } else {
+      var d = new Date(ts);
+      if (!isNaN(d)) dateKey = (d.getMonth() + 1) + '/' + d.getDate();
+    }
+    if (dateKey) {
+      if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, records: 0, progressSum: 0 };
+      dailyMap[dateKey].records++;
+      dailyMap[dateKey].progressSum += progress;
+    }
+  }
+
+  var dailyStats = Object.keys(dailyMap).sort().map(function(k) {
+    var d = dailyMap[k];
+    return { date: d.date, records: d.records, avgProgress: Math.round(d.progressSum / d.records) };
+  });
+
+  return {
+    totalStudents: Object.keys(nameSet).length,
+    totalRecords: totalRecords,
+    totalTasks: totalTasks,
+    avgProgress: totalRecords > 0 ? Math.round(progressSum / totalRecords) : 0,
+    dailyStats: dailyStats.slice(-10)
+  };
+}
+
 /*=====================================================================
  * 보조 함수
  *====================================================================*/
@@ -430,9 +590,11 @@ function ensureSubmitSheet_(ss) {
   if (!sh) {
     sh = ss.insertSheet(SUBMIT_SHEET);
     sh.getRange(1, 1, 1, SUBMIT_HEADERS.length).setValues([SUBMIT_HEADERS]);
-    sh.getRange(1, 1, 1, SUBMIT_HEADERS.length).setFontWeight('bold').setBackground('#E0F2F1');
+    sh.getRange(1, 1, 1, SUBMIT_HEADERS.length).setFontWeight('bold').setBackground('#C8E6C9');
     sh.setFrozenRows(1);
-    sh.setColumnWidth(8, 320); // 내용 열 넓게
+    sh.setColumnWidth(4, 320); // 실천 내용 열
+    sh.setColumnWidth(5, 200); // 한마디 열
+    sh.setColumnWidth(6, 200); // 다짐 열
   }
   return sh;
 }
