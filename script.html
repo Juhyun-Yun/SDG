@@ -129,6 +129,7 @@ function selectTask(themeId, taskText, event) {
   if (mainNextBtn) mainNextBtn.style.display = 'block';
   setTimeout(() => {
     closeMissionPicker();
+    // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동
     if (currentCount === 3) goToStep(2);
   }, 400);
 }
@@ -155,6 +156,7 @@ function addCustomTask(themeId) {
   const mainNextBtn = document.getElementById('btn-next-step');
   if (mainNextBtn) mainNextBtn.style.display = 'block';
   closeMissionPicker();
+  // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동
   if (currentCount === 3) {
     setTimeout(() => goToStep(2), 500);
   }

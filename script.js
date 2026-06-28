@@ -149,16 +149,16 @@ function closeMissionPicker(event) {
 }
 
 function selectTask(themeId, taskText) {
-  // Check limit (max 3)
   if (APP_STATE.selectedMissions.length >= 3) {
     showToast("이미 3개의 미션을 모두 선택하셨습니다! 😊");
+    closeMissionPicker();
     return;
   }
 
-  // Check if already selected
   const isAlreadySelected = APP_STATE.selectedMissions.some(m => m.taskText === taskText);
   if (isAlreadySelected) {
     showToast("이미 선택한 미션입니다! 😊");
+    closeMissionPicker();
     return;
   }
 
@@ -168,16 +168,12 @@ function selectTask(themeId, taskText) {
   const currentCount = APP_STATE.selectedMissions.length;
   showToast(`미션이 추가되었습니다! (${currentCount}/3) ✨`);
 
-  // Show the next button on the MAIN screen
   const mainNextBtn = document.getElementById('btn-next-step');
   if (mainNextBtn) mainNextBtn.style.display = 'block';
 
-  // Always close picker immediately on selection as requested
-  setTimeout(() => {
-    closeMissionPicker();
-    // If it was the 3rd one, auto-advance to summary
-    if (currentCount === 3) goToStep(2);
-  }, 400);
+  closeMissionPicker();
+  // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동 (기간 설정은 그 다음)
+  if (currentCount === 3) setTimeout(() => goToStep(2), 300);
 }
 
 function addCustomTask(themeId) {
@@ -199,6 +195,7 @@ function addCustomTask(themeId) {
 
   if (APP_STATE.selectedMissions.length >= 3) {
     showToast("이미 3개의 미션을 모두 선택하셨습니다! 😊");
+    closeMissionPicker();
     return;
   }
 
@@ -208,16 +205,14 @@ function addCustomTask(themeId) {
   const currentCount = APP_STATE.selectedMissions.length;
   showToast(`나만의 미션이 추가되었습니다! (${currentCount}/3) ✨`);
 
-  // Show the next button on the MAIN screen
   const mainNextBtn = document.getElementById('btn-next-step');
   if (mainNextBtn) mainNextBtn.style.display = 'block';
 
-  // Always close picker
   closeMissionPicker();
 
-  // If it's the 3rd one, go to summary
+  // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동
   if (currentCount === 3) {
-    setTimeout(() => goToStep(2), 500);
+    setTimeout(() => goToStep(2), 300);
   }
 
   if (input) input.value = '';
@@ -285,14 +280,13 @@ function handleLogin() {
     return;
   }
 
-  // Load student-specific config if exists
+  // 시트 연결 시에만 이전 데이터 복원. 데모 모드는 항상 새로 시작.
   const configKey = 'sdg_hero_config_' + name;
-  const savedConfig = localStorage.getItem(configKey);
+  const savedConfig = isSheetConnected() ? localStorage.getItem(configKey) : null;
 
   if (savedConfig) {
     try {
       const parsed = JSON.parse(savedConfig);
-      // Explicitly reset APP_STATE and then apply parsed data
       APP_STATE.selectedMissions = parsed.selectedMissions || [];
       APP_STATE.startDate = parsed.startDate || '';
       APP_STATE.endDate = parsed.endDate || '';
@@ -300,9 +294,13 @@ function handleLogin() {
       APP_STATE.progress = parsed.progress || 0;
     } catch (e) {
       console.error("Config parse error for", name, e);
+      APP_STATE.selectedMissions = [];
+      APP_STATE.startDate = '';
+      APP_STATE.endDate = '';
+      APP_STATE.myGoal = '';
+      APP_STATE.progress = 0;
     }
   } else {
-    // Fresh start for a new student or one with no saved config
     APP_STATE.selectedMissions = [];
     APP_STATE.startDate = '';
     APP_STATE.endDate = '';
@@ -352,7 +350,7 @@ function handleLogin() {
 
 function renderDefaultStudents(select) {
   const options = Array.from({ length: 30 }, (_, i) =>
-    `<option value="학생${i + 1}">${i + 1}. 학생${i + 1}</option>`
+    `<option value="학생${i + 1}">학생${i + 1}</option>`
   ).join('');
   select.innerHTML = '<option value="">이름을 선택해주세요.</option>' + options;
   select.value = '';
@@ -371,22 +369,30 @@ async function loadStudentList() {
   try {
     select.innerHTML = '<option value="">명단 불러오는 중... 📡</option>';
 
-    const response = await fetch(APP_STATE.gasUrl + '?action=getStudents');
+    // code.gs doGet은 action=getRoster 를 처리합니다.
+    const response = await fetch(APP_STATE.gasUrl + '?action=getRoster');
     if (!response.ok) throw new Error('HTTP ' + response.status);
 
     const data = await response.json();
-    const list = data.studentList || (data.students || []).map(n => ({ num: '', name: n }));
-    if (list && list.length > 0) {
+    // code.gs 응답 형식: { ok: true, students: [{id, name, team}] }
+    const rawList = data.students || data.studentList || [];
+    // id(번호)가 있으면 "번호. 이름", 없으면 이름만 표시
+    const list = rawList.map(s => {
+      if (typeof s === 'string') return { label: s, value: s };
+      const label = s.id ? `${s.id}. ${s.name}` : s.name;
+      return { label, value: label };
+    });
+
+    if (data.ok && list.length > 0) {
       APP_STATE.sheetConnected = true;
       select.innerHTML = '<option value="">이름을 선택해주세요.</option>' +
-        list.map(s => {
-          const label = s.num ? `${s.num}. ${s.name}` : s.name;
-          return `<option value="${label}">${label}</option>`;
-        }).join('');
-      select.value = '';
-    } else {
+        list.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+      select.value = APP_STATE.heroName || '';
+    } else if (data.ok && list.length === 0) {
       APP_STATE.sheetConnected = true;
       select.innerHTML = '<option value="">학생 명단이 비어 있습니다.</option>';
+    } else {
+      throw new Error(data.error || '명단 응답 오류');
     }
   } catch (err) {
     console.error("Student load error:", err);
@@ -546,7 +552,15 @@ function saveSpreadsheetUrl() {
 }
 
 async function loadSidebarStats() {
-  if (!APP_STATE.gasUrl || !APP_STATE.gasUrl.startsWith('https')) return;
+  if (!isSheetConnected()) {
+    const msgEl = document.getElementById('sb-msg');
+    if (msgEl) msgEl.innerText = '체험 모드 — 시트 연결 시 반 현황이 표시됩니다 📋';
+    ['sb-students','sb-records','sb-tasks','sb-avg'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerText = '-';
+    });
+    return;
+  }
   try {
     const res = await fetch(APP_STATE.gasUrl + '?action=getClassStats');
     if (!res.ok) return;
@@ -953,7 +967,8 @@ function resetChallenge() {
 }
 function saveState() {
   localStorage.setItem('sdg_hero_v6', JSON.stringify(APP_STATE));
-  if (APP_STATE.heroName) {
+  // 시트 연결 시에만 설정 저장 — 데모 모드는 저장하지 않아 다음 로그인 시 이전 데이터가 보이지 않게
+  if (APP_STATE.heroName && isSheetConnected()) {
     localStorage.setItem('sdg_hero_config_' + APP_STATE.heroName, JSON.stringify(APP_STATE));
   }
 }
@@ -974,9 +989,25 @@ async function toggleHistory() {
   renderHistory();
 }
 function renderHistory() {
+  const container = document.getElementById('history-container');
+
+  // 데모 모드에서는 누적 발자취 표시 안 함
+  if (!isSheetConnected()) {
+    if (container) container.innerHTML = `
+      <div style="text-align:center; padding:40px; color:var(--text-muted);">
+        <div style="font-size:2rem; margin-bottom:12px;">📋</div>
+        <p style="font-weight:800; margin-bottom:8px;">히어로 발자취는 시트 연결 후 확인할 수 있어요!</p>
+        <p style="font-size:0.85rem;">오늘 입력한 기록은 이 기기에 저장됩니다.<br>선생님이 구글 시트를 연결하면 전체 발자취를 볼 수 있어요.</p>
+      </div>`;
+    const chartContainer = document.getElementById('history-chart-container');
+    if (chartContainer) chartContainer.innerHTML = '';
+    const visionBox = document.getElementById('history-vision-box');
+    if (visionBox) visionBox.style.display = 'none';
+    return;
+  }
+
   const hKey = 'sdg_history_' + APP_STATE.heroName;
   const history = JSON.parse(localStorage.getItem(hKey) || '[]');
-  const container = document.getElementById('history-container');
 
   const goalElem = document.getElementById('history-display-goal');
   const visionBox = document.getElementById('history-vision-box');
