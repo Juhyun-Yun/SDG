@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SDG's 리틀 히어로 | 나의 지구 지키기 프로젝트</title>
+  <!-- ===== 스타일 (구 index.css 인라인) ===== -->
   <style>
-/*
+/* 
   SDG Little Hero - Premium 'Wowed' Design System (V2)
   Target: 5th-6th Grade Students
 */
@@ -36,25 +37,27 @@
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   background: radial-gradient(circle at top left, #ecfdf5, #f0fdfa, #f1f5f9);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center; /* 카드를 뷰포트 세로 중앙에 배치 */
   color: var(--text-main);
   overflow-x: hidden;
-  padding: 28px 10px 15px;
+  padding: 16px 10px; /* 상하 여백 대칭 — 위로 쏠리지 않도록 */
 }
 
 /* App Container - Responsive & Fluid */
 .app-container {
   width: 100%;
-  max-width: 480px;
+  max-width: 480px; 
   background: var(--card-bg);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: var(--shadow-premium);
   border-radius: var(--radius-xl);
-  height: 92vh;
+  height: calc(100vh - 32px); /* body 상하 padding(16px x 2) 제외 */
+  height: calc(100dvh - 32px);
   max-height: 900px;
   display: flex;
   flex-direction: column;
@@ -63,8 +66,10 @@ body {
   position: relative; /* Added for absolute modal positioning */
 }
 
-/* Landscape Mode for Tablet/Desktop */
-@media (min-width: 1024px) {
+/* 가로형(사이드 배너 + 좌우 배치)이 기본.
+   창이 작아져도 가로가 세로의 4/5 이상이면 가로형을 유지하고,
+   세로로 길쭉한 폰 화면에서만 세로형으로 떨어진다. */
+@media (min-width: 1024px), (min-width: 480px) and (min-aspect-ratio: 4/5) {
   /* body를 정확히 뷰포트 높이로 고정해 페이지 레벨 스크롤 차단 */
   body {
     height: 100dvh;
@@ -83,10 +88,11 @@ body {
 
   .side-banner {
     display: flex !important;
-    flex: 0 0 300px; /* 고정 폭, 축소 방지 */
+    /* 좁은 가로 화면에서는 배너가 함께 줄어야 본문이 눌리지 않는다 */
+    flex: 0 0 clamp(150px, 24%, 300px);
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
-    padding: 36px 32px;
+    padding: clamp(12px, 2.4vw, 36px) clamp(8px, 2.2vw, 32px);
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -100,7 +106,7 @@ body {
     position: absolute;
     top: -20px;
     left: -20px;
-    font-size: 10rem;
+    font-size: clamp(4rem, 9vw, 10rem);
     font-weight: 900;
     opacity: 0.1;
     color: white;
@@ -118,14 +124,23 @@ body {
     min-height: 0 !important;
   }
 
-  /* 랜드스케이프에서 로그인 상단 여백 과도하지 않게 */
+  /* 랜드스케이프에서도 로그인은 세로 중앙 기준 */
   #step-login {
-    padding-top: 40px !important;
+    padding: 24px !important;
   }
 }
 
+/* 세로가 짧은 가로 화면(폰 가로 모드 등) — 세로 공간을 아끼도록 여백·글자 축소 */
+@media (max-height: 560px) {
+  header { padding: 4px 14px; }
+  header h1 { font-size: clamp(0.95rem, 2.2vw, 1.6rem); }
+  main { padding: 6px 12px; }
+  footer { padding: 8px !important; font-size: 0.7rem !important; }
+  .sidebar-stats { display: none; } /* 배너 높이가 부족하면 통계 박스는 생략 */
+}
+
 .side-banner {
-  display: none; /* Mobile hidden */
+  display: none; /* 세로형(폰 세로)에서는 숨김 */
 }
 
 header {
@@ -149,6 +164,8 @@ main {
   min-height: 0; /* flex 자식이 콘텐츠 크기로 팽창하지 않도록 강제 — 없으면 overflow:hidden에 잘림 */
   padding: 8px 25px;
   overflow-y: auto;
+  display: flex;           /* 각 단계를 세로 중앙에 놓기 위한 flex 컨테이너 */
+  flex-direction: column;
   scroll-behavior: smooth;
   /* Hide Scrollbar */
   -ms-overflow-style: none; /* IE/Edge */
@@ -156,6 +173,18 @@ main {
 }
 main::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+}
+
+/* 현재 단계(section)를 남는 공간의 세로 중앙에 배치.
+   justify-content:center 대신 margin:auto를 쓰는 이유 —
+   내용이 화면보다 길어졌을 때 위쪽이 잘려 스크롤이 안 되는 문제를 피하기 위함. */
+/* 선택자를 id로 잡는 이유 — .card의 margin-bottom:20px 보다 명시도가 높아야
+   auto 마진이 이겨서 위아래가 균등하게 나뉜다. */
+#app-main > section {
+  width: 100%;
+  flex-shrink: 0;      /* 내용이 길면 찌그러뜨리지 말고 스크롤되게 */
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 /* Premium Card Style */
@@ -173,9 +202,9 @@ main::-webkit-scrollbar {
 #step-login {
   display: flex;
   flex-direction: column !important;
-  justify-content: flex-start !important;
+  justify-content: center !important; /* 로그인 내용을 카드 세로 중앙에 */
   align-items: center !important;
-  padding-top: 100px !important;
+  padding: 24px !important;
   min-height: 100% !important;
   width: 100% !important;
   margin: 0 !important;
@@ -528,12 +557,15 @@ select {
 }
 
 /* SDG Gallery & Item Buttons */
+/* SDG 마크 1칸 + 17개 목표 = 18칸을 6열 x 3줄로 고정 배치 */
 .sdg-gallery {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  /* minmax(0,1fr) — 1fr의 기본 최소폭(min-content)이 글자 폭이라
+     좁은 화면에서 6열이 가로로 넘치는 것을 막는다 */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(3px, 0.7vw, 8px);
   margin-bottom: 16px;
-  padding: 10px;
+  padding: clamp(6px, 1.1vw, 12px);
   background: #f8fafc;
   border-radius: var(--radius-md);
   box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.04);
@@ -543,13 +575,12 @@ select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 24px 4px 14px;
-  min-height: 128px;
+  /* 6열이라 칸이 좁아지므로 화면 크기에 따라 여백·글자를 함께 줄인다 */
+  gap: clamp(2px, 0.5vw, 5px);
+  padding: clamp(10px, 1.4vw, 18px) clamp(2px, 0.6vw, 8px) clamp(5px, 0.8vw, 10px);
   background: white;
   border: 2px solid #f1f5f9;
-  border-radius: 10px;
+  border-radius: clamp(8px, 1vw, 14px);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -570,33 +601,58 @@ select {
 
 .sdg-item .sdg-num {
   position: absolute;
-  top: 5px;
-  left: 5px;
-  font-size: 0.55rem;
+  top: clamp(3px, 0.6vw, 8px);
+  left: clamp(3px, 0.6vw, 8px);
+  font-size: clamp(0.42rem, 0.9vw, 0.65rem);
   font-weight: 900;
   color: var(--sdg-color, var(--primary));
   background: color-mix(in srgb, var(--sdg-color, var(--primary)) 12%, white);
-  padding: 1px 4px;
-  border-radius: 4px;
-  letter-spacing: 0.3px;
+  padding: 1px clamp(2px, 0.5vw, 6px);
+  border-radius: 6px;
+  letter-spacing: 0.5px;
 }
 
-.sdg-item img {
+/* 좁은 화면에서는 번호 배지가 그림을 가려서 숨김 (타일 이미지에 번호가 이미 있음) */
+@media (max-width: 600px) {
+  .sdg-item .sdg-num { display: none; }
+}
+
+.sdg-item img,
+.sdg-item .sdg-wheel {
   width: 100%;
-  max-width: 70px;
+  max-width: 100%;   /* 6열 고정이므로 칸 너비가 크기를 결정 */
   aspect-ratio: 1;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: transform 0.2s;
 }
 
 .sdg-item .sdg-label {
-  font-size: 0.6rem;
+  font-size: clamp(0.46rem, 1.1vw, 0.72rem);
   font-weight: 800;
   color: var(--text-main);
   text-align: center;
   word-break: keep-all;
+  overflow-wrap: anywhere; /* 낱말이 칸보다 길면 그때만 강제로 줄바꿈 */
   line-height: 1.2;
 }
+
+/* 18칸 중 첫 칸 — SDG 마크. 목표가 아니므로 클릭 대상이 아니다. */
+.sdg-logo {
+  cursor: default;
+}
+.sdg-logo::before {
+  background: linear-gradient(to right,
+    #E5243B, #DDA63A, #4C9F38, #C5192D, #FF3A21, #26BDE2,
+    #FCC30B, #A21942, #FD6925, #DD1367, #FD9D24, #BF8B2E,
+    #3F7E44, #0A97D9, #56C02B, #00689D, #19486A);
+}
+.sdg-logo:hover {
+  transform: none;
+  border-color: #f1f5f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.sdg-logo:hover .sdg-wheel { transform: none; }
+.sdg-logo:active { transform: none; background: white; }
 
 .sdg-item:hover {
   transform: translateY(-4px);
@@ -615,31 +671,31 @@ select {
 /* Sidebar Live Stats (desktop only) */
 .sidebar-stats {
   width: 100%;
-  margin-top: 36px;
+  margin-top: clamp(10px, 2.6vw, 36px);
   background: rgba(255,255,255,0.18);
   border-radius: 18px;
-  padding: 18px 16px;
+  padding: clamp(8px, 1.4vw, 18px) clamp(6px, 1.2vw, 16px);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.3);
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 .sidebar-stats-title {
-  font-size: 0.85rem;
+  font-size: clamp(0.6rem, 0.85vw, 0.85rem);
   font-weight: 900;
   color: white;
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: clamp(6px, 1vw, 12px);
   letter-spacing: 0.5px;
 }
 .sidebar-stat-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: clamp(4px, 0.8vw, 10px);
+  margin-bottom: clamp(6px, 1vw, 12px);
 }
 .sidebar-stat {
   background: rgba(255,255,255,0.22);
-  padding: 12px 6px;
+  padding: clamp(6px, 1vw, 12px) clamp(3px, 0.5vw, 6px);
   border-radius: 12px;
   text-align: center;
   display: flex;
@@ -647,24 +703,24 @@ select {
   border: 1px solid rgba(255,255,255,0.15);
 }
 .sb-num {
-  font-size: 1.5rem;
+  font-size: clamp(0.95rem, 1.5vw, 1.5rem);
   font-weight: 900;
   color: white;
   line-height: 1.1;
   text-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 .sb-label {
-  font-size: 0.7rem;
+  font-size: clamp(0.5rem, 0.7vw, 0.7rem);
   color: rgba(255,255,255,0.95);
   font-weight: 800;
   margin-top: 4px;
 }
 .sidebar-stats-msg {
-  font-size: 0.78rem;
+  font-size: clamp(0.55rem, 0.78vw, 0.78rem);
   color: white;
   font-weight: 800;
   text-align: center;
-  padding: 8px 6px;
+  padding: clamp(5px, 0.8vw, 8px) 6px;
   background: rgba(255,255,255,0.15);
   border-radius: 10px;
 }
@@ -1140,13 +1196,14 @@ select {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
   </style>
+  <!-- AOS for animations might be overkill, sticking to standard CSS for efficiency -->
 </head>
 <body>
   <div class="app-container">
     <!-- Landscape Mode Side Panel (Hidden on Mobile) -->
     <div class="side-banner">
-      <h1 style="font-size: 2.4rem; margin-top: 19px; margin-bottom: 16px; color: white; -webkit-text-fill-color: initial; line-height: 1.15;">SDG's 리틀<br>히어로</h1>
-      <p style="font-size: 1rem; opacity: 0.9; margin-bottom: 24px;">"지구를 구하는 영웅은<br>멀리있지 않아요.<br>바로 당신의 작은 실천에서<br>시작됩니다."</p>
+      <h1 style="font-size: clamp(1.05rem, 2.3vw, 2.4rem); margin-top: 19px; margin-bottom: clamp(6px, 1.2vw, 16px); color: white; -webkit-text-fill-color: initial; line-height: 1.15;">SDG's 리틀<br>히어로</h1>
+      <p style="font-size: clamp(0.6rem, 1vw, 1rem); opacity: 0.9; margin-bottom: clamp(8px, 1.8vw, 24px); line-height: 1.5;">"지구를 구하는 영웅은<br>멀리있지 않아요.<br>바로 당신의 작은 실천에서<br>시작됩니다."</p>
 
       <!-- Live Class Stats Sidebar -->
       <div class="sidebar-stats" id="sidebar-stats">
@@ -1176,8 +1233,8 @@ select {
               <span style="font-size: 2.5rem; animation: bounce 2s infinite; display: inline-block;">🌟</span>
               <h2 style="font-size: 1.8rem; font-weight: 900; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin: 0; white-space: nowrap;">히어로 출석체크!</h2>
             </div>
-
-
+            
+            
             <div style="width: 100%; position: relative; margin-bottom: 25px;">
               <select id="hero-name" style="width: 100%; padding: 18px; font-size: 1.1rem; border-radius: 20px; border: 2px solid #e2e8f0; background: white; appearance: none; text-align: center; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.3s; color: var(--text-main);">
                 <option value="">이름을 불러오는 중...</option>
@@ -1186,7 +1243,7 @@ select {
             </div>
 
             <button class="btn btn-primary" style="width: 100%;" onclick="handleLogin()">히어로 입장하기 🚀</button>
-
+            
             <div id="login-loader" style="display: none; margin-top: 20px; font-size: 0.9rem; color: var(--primary); font-weight: bold;">
               본부와 연결 중입니다... 📡
             </div>
@@ -1229,11 +1286,37 @@ select {
         </section>
 
         <!-- STEP 1.5: SDG Gallery Items -->
-        <section id="step-sdg-gallery" class="card" style="display: none; padding-top: 0; margin-top: 0;">
+        <section id="step-sdg-gallery" class="card" style="display: none; padding-top: 0;">
           <h2 style="font-size: 1.35rem; color: var(--primary); margin-bottom: 4px; text-align: center;">17가지 약속 살펴보기 🌎</h2>
           <p style="text-align: center; color: var(--text-muted); margin-bottom: 12px; font-size: 0.8rem; font-weight: 700;">관심 있는 항목을 눌러 실천 미션을 정해보세요!</p>
 
           <div class="sdg-gallery">
+            <!-- 18칸 중 1번 칸: SDG 마크 (17색 휠 — 외부 이미지 없이 SVG로 직접 그림) -->
+            <div class="sdg-item sdg-logo" style="--sdg-color: #19486A;">
+              <svg class="sdg-wheel" viewBox="0 0 100 100" role="img" aria-label="지속가능발전목표 SDGs">
+                <g fill="none" stroke-width="15" transform="rotate(-90 50 50)">
+                  <circle cx="50" cy="50" r="38" stroke="#E5243B" stroke-dasharray="11.6 227.16" stroke-dashoffset="0"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#DDA63A" stroke-dasharray="11.6 227.16" stroke-dashoffset="-14.05"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#4C9F38" stroke-dasharray="11.6 227.16" stroke-dashoffset="-28.09"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#C5192D" stroke-dasharray="11.6 227.16" stroke-dashoffset="-42.13"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#FF3A21" stroke-dasharray="11.6 227.16" stroke-dashoffset="-56.18"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#26BDE2" stroke-dasharray="11.6 227.16" stroke-dashoffset="-70.22"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#FCC30B" stroke-dasharray="11.6 227.16" stroke-dashoffset="-84.27"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#A21942" stroke-dasharray="11.6 227.16" stroke-dashoffset="-98.31"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#FD6925" stroke-dasharray="11.6 227.16" stroke-dashoffset="-112.36"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#DD1367" stroke-dasharray="11.6 227.16" stroke-dashoffset="-126.40"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#FD9D24" stroke-dasharray="11.6 227.16" stroke-dashoffset="-140.45"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#BF8B2E" stroke-dasharray="11.6 227.16" stroke-dashoffset="-154.49"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#3F7E44" stroke-dasharray="11.6 227.16" stroke-dashoffset="-168.54"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#0A97D9" stroke-dasharray="11.6 227.16" stroke-dashoffset="-182.58"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#56C02B" stroke-dasharray="11.6 227.16" stroke-dashoffset="-196.63"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#00689D" stroke-dasharray="11.6 227.16" stroke-dashoffset="-210.67"></circle>
+                  <circle cx="50" cy="50" r="38" stroke="#19486A" stroke-dasharray="11.6 227.16" stroke-dashoffset="-224.72"></circle>
+                </g>
+                <text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-size="21" font-weight="900" fill="#1e293b">SDGs</text>
+              </svg>
+              <span class="sdg-label">지속가능<br>발전목표</span>
+            </div>
             <div class="sdg-item" style="--sdg-color: #E5243B;" onclick="openMissionPicker(1)"><span class="sdg-num">01</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-01-1024x1024.png"><span class="sdg-label">빈곤 퇴치</span></div>
             <div class="sdg-item" style="--sdg-color: #DDA63A;" onclick="openMissionPicker(2)"><span class="sdg-num">02</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-02-1024x1024.png"><span class="sdg-label">기아 종식</span></div>
             <div class="sdg-item" style="--sdg-color: #4C9F38;" onclick="openMissionPicker(3)"><span class="sdg-num">03</span><img src="https://www.un.org/sustainabledevelopment/wp-content/uploads/2019/08/E-Goal-03-1024x1024.png"><span class="sdg-label">건강과 웰빙</span></div>
@@ -1261,7 +1344,7 @@ select {
         <!-- STEP 2: Mission Summary (NEW) -->
         <section id="step-summary" class="card" style="display: none; padding: 20px;">
           <h2 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 15px; text-align: center;">선택한 미션 확인 🔍</h2>
-
+          
           <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 15px; margin-bottom: 20px;">
             <!-- Left: Missions -->
             <div style="background: #f8fafc; padding: 15px; border-radius: 20px; border: 1px dashed var(--primary); display: flex; flex-direction: column;">
@@ -1286,7 +1369,7 @@ select {
         <!-- STEP 2.5: Challenge Period Setup -->
         <section id="step-vision" class="card" style="padding: 25px; display: none;">
           <h2 style="font-size: 1.3rem; color: var(--secondary); margin-bottom: 20px; text-align: center;">챌린지 기간 설정 📅</h2>
-
+          
           <div style="margin-bottom: 25px;">
             <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--secondary); font-weight: 800;">언제부터 언제까지 할까요?</h3>
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
@@ -1294,12 +1377,12 @@ select {
               <span style="font-weight: 800; color: #94a3b8;">~</span>
               <input type="date" id="end-date" onchange="updateDurationDisplay()" style="flex: 1; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 0.95rem;">
             </div>
-
+            
             <div id="duration-info" style="background: #f0f9ff; padding: 15px; border-radius: 15px; border: 1px solid #bae6fd; text-align: center;">
               <span style="font-size: 0.9rem; color: #0369a1; font-weight: 800;">총 <span id="setup-total-days" style="font-size: 1.2rem; color: #0284c7;">0</span>일 동안의 도전입니다! 🚀</span>
             </div>
           </div>
-
+          
           <button class="btn btn-primary" onclick="confirmMissions()" style="width: 100%; padding: 12px; font-size: 1rem;">최종 미션 확정하기! 🔥</button>
         </section>
 
@@ -1360,11 +1443,11 @@ select {
               <h3 id="history-display-goal" style="font-size: 1rem; font-weight: 900; color: #78350f; margin: 0;">지구를 구하는 멋진 히어로!</h3>
             </div>
           </div>
-
+          
           <div style="display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 20px;">
             <!-- Left: Table Records -->
             <div id="history-container"></div>
-
+            
             <!-- Right: Cumulative Growth Graph -->
             <div class="card" style="padding: 20px; background: white; height: fit-content; border: 1px solid #e2e8f0;">
               <h3 style="font-size: 1rem; margin-bottom: 20px; color: var(--primary); text-align: center;">🌱 히어로 성장 그래프</h3>
@@ -1417,7 +1500,10 @@ select {
                 <p id="daily-chart-empty" style="text-align:center; color:var(--text-muted); font-size:0.78rem; padding:14px; display:none;">아직 날짜별 기록이 없어요.</p>
               </div>
 
-
+              <div class="card" style="background: linear-gradient(135deg, #ecfdf5, #f0f9ff); border: 1px solid rgba(16,185,129,0.2); padding: 14px 16px; margin-bottom: 10px;">
+                <p style="font-size: 0.82rem; color: #065f46; font-weight: 700; line-height: 1.5; margin-bottom: 8px;">📊 더 자세한 통계는 스프레드시트의 <b>"📊 대시보드"</b> 시트에서 확인하세요.</p>
+                <button class="btn btn-primary" style="width:100%; padding: 10px; font-size: 0.85rem;" onclick="openSpreadsheet()">📈 스프레드시트 대시보드 열기</button>
+              </div>
 
               <button class="btn btn-secondary" style="width:100%; padding: 10px; font-size: 0.85rem;" onclick="loadTeacherStats()">🔄 새로고침</button>
             </div>
@@ -1426,54 +1512,58 @@ select {
           <!-- TAB: SETTINGS -->
           <div id="teacher-tab-settings" class="teacher-tab-content" style="display:none;">
 
-            <!-- 앱스스크립트 모드: 이 시트에 직접 연결됨 (JS가 표시/숨김) -->
-            <div class="card setup-card" id="settings-connected-card" style="display:none;">
-              <h3 style="font-size: 1rem; margin-bottom: 8px; color: #166534;">✅ 이 시트에 직접 연결됨</h3>
-              <p style="font-size: 0.78rem; color: #15803d; line-height: 1.5;">이 앱은 선생님 구글 시트에서 <b>직접 실행</b> 중입니다. 모든 기록은 <b>이 시트에만</b> 저장돼요. 아래 학생용 주소를 공유하세요.</p>
-            </div>
-
-            <!-- 정적 호스팅(깃허브) 모드: 웹 앱 URL 입력 (JS가 표시/숨김) -->
-            <div class="card setup-card" id="settings-url-card" style="display:none;">
-              <h3 style="font-size: 1rem; margin-bottom: 10px; color: #92400e;">🔗 우리 학급 시트에 연결하기</h3>
-              <p style="font-size: 0.78rem; color: #78350f; line-height: 1.5; margin-bottom: 10px;">지금은 <b>정적 호스팅(예: 깃허브)</b>에서 실행 중이에요. 우리 학급 데이터를 쓰려면 아래에 앱스스크립트 <b>웹 앱 URL</b>을 붙여넣어 주세요.</p>
+            <!-- Class Connection Setup -->
+            <div class="card setup-card">
+              <h3 style="font-size: 1rem; margin-bottom: 10px; color: #92400e;">🔗 우리 학급에 연결하기</h3>
+              <p style="font-size: 0.78rem; color: #78350f; line-height: 1.5; margin-bottom: 10px;">다른 선생님도 이 앱을 자기 학급용으로 쓸 수 있어요. 아래 가이드를 따라 우리 학급 시트와 연결해주세요.</p>
 
               <details class="setup-guide">
                 <summary>📚 처음 사용하는 선생님이라면 (3단계 가이드)</summary>
                 <ol>
                   <li>
                     <b>① 스프레드시트 사본 만들기</b>
-                    제공받은 SDG 리틀 히어로 템플릿 시트를 열고 <b>파일 → 사본 만들기</b>. (Apps Script 코드도 함께 복사됩니다.)
+                    제공받은 SDG 리틀 히어로 템플릿 시트를 열고 <b>파일 → 사본 만들기</b>를 누르세요. 사본 이름은 <i>"우리반 SDG 히어로"</i> 처럼 자유롭게 지정합니다. (Apps Script 코드도 자동으로 함께 복사됩니다.)
                   </li>
                   <li>
                     <b>② Apps Script 새 배포</b>
-                    내 사본 시트에서 <b>확장 프로그램 → Apps Script</b> → 우상단 <b>배포 → 새 배포</b>. 유형 <b>웹 앱</b>, ⚠️ 액세스 권한 <i>모든 사용자(Anyone)</i>. <b>배포</b> 후 표시된 <b>웹 앱 URL</b> 복사.
+                    내 사본 시트에서 <b>확장 프로그램 → Apps Script</b>를 열고, 우상단 <b>배포 → 새 배포</b> 클릭. 유형은 <b>웹 앱</b>, ⚠️ 액세스 권한은 반드시 <i>모든 사용자(Anyone)</i> 로 설정해야 합니다 (Google 계정 보유자/본인만으로 두면 데이터를 못 받아옵니다). 설정 후 <b>배포</b>를 누르고 표시된 <b>웹 앱 URL</b>을 복사합니다.
                   </li>
                   <li>
-                    <b>③ 아래 칸에 URL 붙여넣기</b>
-                    복사한 웹 앱 URL(끝이 <i>/exec</i>)을 붙여넣고 저장하면 우리 학급 데이터가 연결됩니다.
+                    <b>③ 아래 두 칸에 URL 붙여넣기</b>
+                    "본부 URL"엔 위에서 받은 웹 앱 URL을, "스프레드시트 주소"엔 사본 시트의 브라우저 주소창 URL을 각각 붙여넣고 저장. 저장 후 페이지를 새로고침(F5)하면 우리 학급 데이터가 표시됩니다.
                   </li>
                 </ol>
               </details>
 
               <div class="url-config">
-                <label>📡 웹 앱(Apps Script) URL <span class="url-required">*필수</span></label>
+                <label>📡 본부(Apps Script) URL <span class="url-required">*필수</span></label>
                 <div class="url-input-row">
                   <input id="gas-url-input" type="text" placeholder="https://script.google.com/macros/s/.../exec">
                   <button onclick="saveGasUrl()">저장</button>
                 </div>
                 <p class="config-hint">현재 사용 중: <code id="gas-url-current" style="font-size: 0.65rem; word-break: break-all;"></code></p>
+                <button class="btn-link" onclick="resetGasUrlToDefault()">↩️ 기본 URL로 복원</button>
+              </div>
+
+              <div class="url-config">
+                <label>📊 스프레드시트 주소</label>
+                <div class="url-input-row">
+                  <input id="spreadsheet-url-input" type="text" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                  <button onclick="saveSpreadsheetUrl()">저장</button>
+                </div>
+                <p class="config-hint">아래 '시트 열기' 버튼이 여는 주소입니다.</p>
+                <button class="btn btn-primary" style="margin-top: 8px; width: 100%; font-size: 0.85rem; padding: 10px;" onclick="openSpreadsheet()">📈 저장된 스프레드시트 열기</button>
               </div>
             </div>
 
-            <!-- 공통: 학생용 접속 주소 -->
+            <!-- Student URL Section -->
             <div class="card" style="margin-bottom: 12px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #86efac;">
               <h3 style="font-size: 1rem; margin-bottom: 6px; color: #166534;">🔗 학생용 접속 주소</h3>
-              <p style="font-size: 0.78rem; color: #15803d; line-height: 1.5; margin-bottom: 10px;">이 주소를 학생에게 공유하면 우리 학급 데이터에 자동으로 연결되고, 학생 화면에는 선생님 메뉴가 보이지 않습니다.</p>
+              <p style="font-size: 0.78rem; color: #15803d; line-height: 1.5; margin-bottom: 10px;">이 주소를 학생들에게 공유하면, 학생이 링크로 들어올 때 우리 학급 데이터에 자동으로 연결되며, 학생 화면에는 선생님 메뉴가 보이지 않게 됩니다.</p>
               <div class="url-input-row">
-                <input id="student-url-display" type="text" readonly style="font-size: 0.68rem; background: #fff; color: #334155; cursor: text;" placeholder="주소를 불러오는 중...">
+                <input id="student-url-display" type="text" readonly style="font-size: 0.68rem; background: #f8fafc; color: #334155; cursor: text;" placeholder="본부 URL을 먼저 저장해주세요.">
                 <button onclick="copyStudentUrl()">복사</button>
               </div>
-              <button class="btn-link" onclick="openSpreadsheet()">📊 연결된 스프레드시트 열기</button>
             </div>
 
             <div class="reset-grid">
@@ -1504,11 +1594,11 @@ select {
       <div class="modal-content" onclick="event.stopPropagation()">
         <button class="modal-close" onclick="closeMissionPicker()">✕</button>
         <h3 id="picker-title" style="margin-bottom: 12px; color: var(--primary); text-align: center; font-size: 1.2rem;">실천하기</h3>
-
+        
         <div id="picker-tasks" style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px;">
           <!-- Task buttons will be injected here -->
         </div>
-
+        
         <div style="border-top: 1px dashed #cbd5e1; padding-top: 15px;">
           <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: var(--text-main);">✨ 나만의 약속 직접 만들기</p>
           <input type="text" id="custom-task-input" placeholder="나만의 미션을 입력하세요!" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; font-size: 0.95rem;" onkeypress="if(event.key==='Enter'){ addCustomTask(); }">
@@ -1521,11 +1611,10 @@ select {
   <!-- Custom Toast Notification -->
   <div id="toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 50px; font-size: 0.9rem; z-index: 10000; display: none; animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <!-- ===== 스크립트 (구 script.js 인라인) ===== -->
   <script>
-/*
-  SDG's 리틀 히어로 - Logic V6 (Apps Script 단독 배포판)
-  ─ 데이터 통신은 google.script.run 으로 서버(code.gs) 함수를 직접 호출합니다.
+/* 
+  SDG's 리틀 히어로 - Logic V6 (Heart Rating & Custom Tasks)
 */
 
 const APP_STATE = {
@@ -1537,6 +1626,7 @@ const APP_STATE = {
   progress: 0,
   currentStep: 0,
   history: [],
+  gasUrl: '',
   sheetConnected: false
 };
 
@@ -1565,69 +1655,11 @@ let DAILY_RATINGS = {};
 
 let STEPS = {};
 
-// ── 서버 통신 계층 (하이브리드) ──
-// ① 앱스스크립트 웹 앱으로 실행 → google.script.run 사용 (URL 붙여넣기 불필요)
-// ② 깃허브 등 정적 호스팅으로 실행 → 선생님이 저장한 웹 앱 URL 로 fetch 호출
-// 둘 다 아니고 URL 도 없으면 → 체험 모드(localStorage 전용)
-const HAS_GSR = !!(typeof google !== 'undefined' && google.script && google.script.run);
-let GAS_URL = '';            // 정적 호스팅 모드에서 쓰는 웹 앱 URL
-let CACHED_APP_URL = '';
-let CACHED_SHEET_URL = '';
-
-function isValidGasUrl(u) {
-  return !!u && u.indexOf('https://script.google.com/') === 0;
-}
-// 시트에 연결되어 있는가? (둘 중 하나라도 되면 연결로 본다)
+// ── 시트 연동 여부 판별 ──
 function isSheetConnected() {
-  return HAS_GSR || isValidGasUrl(GAS_URL);
-}
-
-// google.script.run 을 Promise 로 감싼 호출 (앱스스크립트 모드)
-function gsr(fn) {
-  const args = Array.prototype.slice.call(arguments, 1);
-  return new Promise(function (resolve, reject) {
-    const r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
-    r[fn].apply(r, args);
-  });
-}
-// 정적 호스팅 모드용 GET (JSON 파싱)
-function fetchGet(query) {
-  return fetch(GAS_URL + '?action=' + query).then(function (res) {
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.text();
-  }).then(function (t) {
-    try { return JSON.parse(t); } catch (e) { throw new Error('서버 응답 형식 오류'); }
-  });
-}
-// 정적 호스팅 모드용 POST (no-cors: 전송만 하고 응답은 못 읽음)
-function fetchPost(bodyObj) {
-  return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(bodyObj) });
-}
-
-// ── 논리 API (실행 모드와 무관하게 같은 형태의 결과를 돌려준다) ──
-function apiGetRoster() {
-  if (HAS_GSR) return gsr('getRoster');
-  return fetchGet('getRoster').then(function (d) { return (d && d.students) || []; });
-}
-function apiGetClassStats() {
-  if (HAS_GSR) return gsr('getClassStats');
-  return fetchGet('getClassStats').then(function (d) { return (d && d.stats) || null; });
-}
-function apiGetHistory(name) {
-  if (HAS_GSR) return gsr('getHistory', name);
-  return fetchGet('getHistory&name=' + encodeURIComponent(name)).then(function (d) { return (d && d.history) || []; });
-}
-function apiSaveRecord(payload) {
-  if (HAS_GSR) return gsr('saveRecord', payload);
-  return fetchPost(Object.assign({ action: 'saveRecord' }, payload));
-}
-function apiGenerateDashboard() {
-  if (HAS_GSR) return gsr('generateDashboard');
-  return fetchPost({ action: 'generateDashboard' });
-}
-function apiClearData() {
-  if (HAS_GSR) return gsr('clearData');
-  return fetchPost({ action: 'clearData' });
+  return APP_STATE.gasUrl &&
+         APP_STATE.gasUrl.startsWith('https://script.google.com/') &&
+         APP_STATE.gasUrl !== 'PASTE_YOUR_GAS_WEB_APP_URL_HERE';
 }
 
 window.onload = () => {
@@ -1646,34 +1678,35 @@ window.onload = () => {
     };
 
     // Check for saved state (but don't auto-redirect to Step 3, let them pick name)
+    const codeGasUrl = APP_STATE.gasUrl;
     const savedState = localStorage.getItem('sdg_hero_v6');
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
         Object.assign(APP_STATE, parsed);
+        // Pre-select the name if it exists in APP_STATE (will be applied once list loads)
       } catch (e) {
         localStorage.removeItem('sdg_hero_v6');
       }
     }
-
-    // 정적 호스팅(깃허브) 모드에서 쓸 웹 앱 URL 결정:
-    //  학생 링크(#c=) > 구형(?gas=) > 이 기기에 저장된 값
+    // gasUrl priority: #c= 해시(학생 링크) > localStorage(선생님 기기) > script.js 기본값
+    // 구형 ?gas= 링크도 하위 호환으로 지원
     const hashGasUrl = new URLSearchParams(location.hash.replace(/^#/, '')).get('c');
     const queryGasUrl = new URLSearchParams(location.search).get('gas');
-    const savedGasUrl = localStorage.getItem('sdg_gas_url');
-    GAS_URL = hashGasUrl || (queryGasUrl ? decodeURIComponent(queryGasUrl) : '') || savedGasUrl || '';
+    const isStudentLink = !!(hashGasUrl || queryGasUrl);
+    const customGasUrl = localStorage.getItem('sdg_gas_url');
+    APP_STATE.gasUrl = (hashGasUrl || (queryGasUrl ? decodeURIComponent(queryGasUrl) : null))
+                       || customGasUrl || codeGasUrl;
 
-    // 학생용 링크로 접속하면 선생님 메뉴 숨김 (#c= 또는 ?student=1)
-    const isStudentLink = !!hashGasUrl || !!queryGasUrl ||
-                          new URLSearchParams(location.search).get('student') === '1';
+    // 학생용 링크로 접속한 경우 선생님 메뉴 숨김
     if (isStudentLink) {
       const btn = document.getElementById('teacher-menu-btn');
       if (btn) btn.style.display = 'none';
     }
 
-    // Set default dates (오늘 ~ 6일 뒤 = 오늘 포함 총 7일)
+    // Set default dates
     const today = new Date().toISOString().split('T')[0];
-    const nextWeek = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     if (document.getElementById('start-date')) document.getElementById('start-date').value = today;
     if (document.getElementById('end-date')) document.getElementById('end-date').value = nextWeek;
 
@@ -1731,16 +1764,16 @@ function closeMissionPicker(event) {
 }
 
 function selectTask(themeId, taskText) {
+  // Check limit (max 3)
   if (APP_STATE.selectedMissions.length >= 3) {
     showToast("이미 3개의 미션을 모두 선택하셨습니다! 😊");
-    closeMissionPicker();
     return;
   }
 
+  // Check if already selected
   const isAlreadySelected = APP_STATE.selectedMissions.some(m => m.taskText === taskText);
   if (isAlreadySelected) {
     showToast("이미 선택한 미션입니다! 😊");
-    closeMissionPicker();
     return;
   }
 
@@ -1750,12 +1783,16 @@ function selectTask(themeId, taskText) {
   const currentCount = APP_STATE.selectedMissions.length;
   showToast(`미션이 추가되었습니다! (${currentCount}/3) ✨`);
 
+  // Show the next button on the MAIN screen
   const mainNextBtn = document.getElementById('btn-next-step');
   if (mainNextBtn) mainNextBtn.style.display = 'block';
 
-  closeMissionPicker();
-  // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동 (기간 설정은 그 다음)
-  if (currentCount === 3) setTimeout(() => goToStep(2), 300);
+  // Always close picker immediately on selection as requested
+  setTimeout(() => {
+    closeMissionPicker();
+    // If it was the 3rd one, auto-advance to summary
+    if (currentCount === 3) goToStep(2);
+  }, 400);
 }
 
 function addCustomTask(themeId) {
@@ -1777,7 +1814,6 @@ function addCustomTask(themeId) {
 
   if (APP_STATE.selectedMissions.length >= 3) {
     showToast("이미 3개의 미션을 모두 선택하셨습니다! 😊");
-    closeMissionPicker();
     return;
   }
 
@@ -1787,14 +1823,16 @@ function addCustomTask(themeId) {
   const currentCount = APP_STATE.selectedMissions.length;
   showToast(`나만의 미션이 추가되었습니다! (${currentCount}/3) ✨`);
 
+  // Show the next button on the MAIN screen
   const mainNextBtn = document.getElementById('btn-next-step');
   if (mainNextBtn) mainNextBtn.style.display = 'block';
 
+  // Always close picker
   closeMissionPicker();
 
-  // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동
+  // If it's the 3rd one, go to summary
   if (currentCount === 3) {
-    setTimeout(() => goToStep(2), 300);
+    setTimeout(() => goToStep(2), 500);
   }
 
   if (input) input.value = '';
@@ -1862,13 +1900,14 @@ function handleLogin() {
     return;
   }
 
-  // 시트 연결 시에만 이전 데이터 복원. 데모 모드는 항상 새로 시작.
+  // Load student-specific config if exists
   const configKey = 'sdg_hero_config_' + name;
-  const savedConfig = isSheetConnected() ? localStorage.getItem(configKey) : null;
+  const savedConfig = localStorage.getItem(configKey);
 
   if (savedConfig) {
     try {
       const parsed = JSON.parse(savedConfig);
+      // Explicitly reset APP_STATE and then apply parsed data
       APP_STATE.selectedMissions = parsed.selectedMissions || [];
       APP_STATE.startDate = parsed.startDate || '';
       APP_STATE.endDate = parsed.endDate || '';
@@ -1876,13 +1915,9 @@ function handleLogin() {
       APP_STATE.progress = parsed.progress || 0;
     } catch (e) {
       console.error("Config parse error for", name, e);
-      APP_STATE.selectedMissions = [];
-      APP_STATE.startDate = '';
-      APP_STATE.endDate = '';
-      APP_STATE.myGoal = '';
-      APP_STATE.progress = 0;
     }
   } else {
+    // Fresh start for a new student or one with no saved config
     APP_STATE.selectedMissions = [];
     APP_STATE.startDate = '';
     APP_STATE.endDate = '';
@@ -1932,10 +1967,42 @@ function handleLogin() {
 
 function renderDefaultStudents(select) {
   const options = Array.from({ length: 30 }, (_, i) =>
-    `<option value="학생${i + 1}">학생${i + 1}</option>`
+    `<option value="학생${i + 1}">${i + 1}. 학생${i + 1}</option>`
   ).join('');
   select.innerHTML = '<option value="">이름을 선택해주세요.</option>' + options;
   select.value = '';
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[<>&"']/g, c =>
+    ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/*
+  시트 응답 한 칸을 { num, name } 으로 정규화한다.
+  배포된 Apps Script 버전에 따라 students가 문자열 배열일 수도,
+  객체 배열일 수도 있어서 두 경우를 모두 받아야 한다.
+  (객체를 그대로 문자열로 쓰면 "[object Object]" 가 표시됨)
+*/
+function normalizeStudent(entry, index) {
+  if (entry === null || entry === undefined) return null;
+
+  if (typeof entry === 'string' || typeof entry === 'number') {
+    const name = String(entry).trim();
+    return name ? { num: '', name: name } : null;
+  }
+
+  if (typeof entry === 'object') {
+    const rawName = entry.name || entry['이름'] || entry.studentName || entry['학생'] || '';
+    const rawNum = entry.num || entry['번호'] || entry.no || '';
+    if (typeof rawName === 'object') return null; // 중첩 객체 → 이름으로 쓸 수 없음
+    const name = String(rawName).trim();
+    if (!name) return null;
+    const num = (typeof rawNum === 'object') ? '' : String(rawNum).trim();
+    return { num: num, name: name };
+  }
+
+  return null;
 }
 
 async function loadStudentList() {
@@ -1951,30 +2018,36 @@ async function loadStudentList() {
   try {
     select.innerHTML = '<option value="">명단 불러오는 중... 📡</option>';
 
-    // 서버 code.gs 의 명단 조회 → [{id, name, team}] 배열
-    const students = await apiGetRoster();
-    const rawList = students || [];
-    // id(번호)가 있으면 "번호. 이름", 없으면 이름만 표시
-    const list = rawList.map(s => {
-      if (typeof s === 'string') return { label: s, value: s };
-      const label = s.id ? `${s.id}. ${s.name}` : s.name;
-      return { label, value: label };
-    });
+    const response = await fetch(APP_STATE.gasUrl + '?action=getStudents');
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    const data = await response.json();
+
+    // studentList(신) → students(구) 순으로 보고, 어떤 모양이 오든 정규화한다
+    const raw = (Array.isArray(data.studentList) && data.studentList.length)
+      ? data.studentList
+      : (Array.isArray(data.students) ? data.students : []);
+    const list = raw.map(normalizeStudent).filter(s => s !== null);
 
     if (list.length > 0) {
       APP_STATE.sheetConnected = true;
       select.innerHTML = '<option value="">이름을 선택해주세요.</option>' +
-        list.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
-      select.value = APP_STATE.heroName || '';
+        list.map(s => {
+          const label = escapeHtml(s.num ? `${s.num}. ${s.name}` : s.name);
+          return `<option value="${label}">${label}</option>`;
+        }).join('');
+      select.value = '';
     } else {
-      APP_STATE.sheetConnected = true;
-      select.innerHTML = '<option value="">학생 명단이 비어 있습니다.</option>';
+      // 시트는 연결됐지만 쓸 수 있는 이름이 없음 → 기본 명단으로 대체
+      APP_STATE.sheetConnected = false;
+      renderDefaultStudents(select);
+      showToast('시트에 이름이 없어 기본 명단(학생1~30)으로 표시합니다.');
     }
   } catch (err) {
     console.error("Student load error:", err);
     APP_STATE.sheetConnected = false;
     renderDefaultStudents(select);
-    showToast('명단 불러오기 실패 — 기본 명단(학생1~30)으로 표시합니다.');
+    showToast('시트 연결 실패 — 기본 명단(학생1~30)으로 표시합니다.');
   }
 }
 
@@ -1991,12 +2064,9 @@ function goToStep(step) {
   Object.values(STEPS).forEach(el => { if (el) el.style.display = 'none'; });
 
   if (STEPS[step]) {
-    // Preserve flex for landing screens
-    if (step === 0) {
-      STEPS[step].style.display = 'flex';
-    } else {
-      STEPS[step].style.display = 'block';
-    }
+    // display 값은 CSS가 결정하도록 인라인 스타일을 비운다.
+    // (#step-login은 CSS에서 flex → 세로 중앙 정렬, 나머지 section은 기본 block)
+    STEPS[step].style.display = '';
   }
 
   if (step === '1.5' || step === 1.5) {
@@ -2036,7 +2106,6 @@ function goToStep(step) {
     switchTeacherTab('stats');
   }
 
-  if (STEPS[step]) STEPS[step].style.display = 'block';
   APP_STATE.currentStep = step;
   saveState();
 }
@@ -2053,103 +2122,90 @@ function switchTeacherTab(tabName) {
 }
 
 function populateSettingsInputs() {
-  const studentUrlDisplay = document.getElementById('student-url-display');
-  const connectedCard = document.getElementById('settings-connected-card');
-  const urlCard = document.getElementById('settings-url-card');
   const gasInput = document.getElementById('gas-url-input');
+  const sheetInput = document.getElementById('spreadsheet-url-input');
   const currentEl = document.getElementById('gas-url-current');
-
-  if (HAS_GSR) {
-    // 앱스스크립트 모드: URL 입력 불필요. 연결됨 안내 + 서버에서 URL 캐시
-    if (connectedCard) connectedCard.style.display = 'block';
-    if (urlCard) urlCard.style.display = 'none';
-    gsr('getAppUrl').then(function (u) {
-      CACHED_APP_URL = u || '';
-      if (studentUrlDisplay) studentUrlDisplay.value = getStudentUrl();
-    }).catch(function () {
-      if (studentUrlDisplay) studentUrlDisplay.value = getStudentUrl();
-    });
-    gsr('getSpreadsheetUrl').then(function (u) { CACHED_SHEET_URL = u || ''; }).catch(function () {});
-  } else {
-    // 정적 호스팅 모드: 웹 앱 URL 입력칸 표시
-    if (connectedCard) connectedCard.style.display = 'none';
-    if (urlCard) urlCard.style.display = 'block';
-    if (gasInput) gasInput.value = GAS_URL || '';
-    if (currentEl) currentEl.innerText = GAS_URL || '(아직 없음)';
-    if (studentUrlDisplay) studentUrlDisplay.value = isValidGasUrl(GAS_URL) ? getStudentUrl() : '';
+  const studentUrlDisplay = document.getElementById('student-url-display');
+  if (gasInput) gasInput.value = APP_STATE.gasUrl || '';
+  if (sheetInput) sheetInput.value = localStorage.getItem('sdg_spreadsheet_url') || '';
+  if (currentEl) {
+    const isCustom = !!localStorage.getItem('sdg_gas_url');
+    const tag = isCustom ? '(설정값)' : '(기본값)';
+    currentEl.innerText = (APP_STATE.gasUrl || '(없음)') + ' ' + tag;
   }
+  if (studentUrlDisplay) studentUrlDisplay.value = getStudentUrl();
 }
 
-// 실행 모드에 맞는 학생용 접속 주소
 function getStudentUrl() {
-  if (HAS_GSR) {
-    // 앱스스크립트: 같은 웹 앱 URL + ?student=1
-    const base = CACHED_APP_URL || window.location.href.split('#')[0].split('?')[0];
-    return base + '?student=1';
-  }
-  // 정적 호스팅: 현재 페이지 + #c=<웹앱URL> (학생이 열면 자동 연결)
   const base = window.location.origin + window.location.pathname;
-  return base + '#c=' + encodeURIComponent(GAS_URL);
+  return base + '#c=' + encodeURIComponent(APP_STATE.gasUrl);
 }
 
 function copyStudentUrl() {
-  if (!HAS_GSR && !isValidGasUrl(GAS_URL)) {
-    showToast('먼저 위에서 웹 앱 URL을 저장해주세요.');
-    return;
-  }
   const url = getStudentUrl();
   navigator.clipboard.writeText(url).then(
     () => showToast('학생용 주소가 복사되었습니다! 📋'),
-    () => showToast('복사 실패 — 아래 칸에서 직접 복사해주세요.')
+    () => showToast('복사 실패 — 주소창에서 직접 복사해주세요.')
   );
 }
 
-// 정적 호스팅 모드에서 선생님이 웹 앱 URL 을 저장
+function resetGasUrlToDefault() {
+  if (!confirm('저장된 본부 URL 설정을 지우고 기본값으로 되돌립니다. 진행할까요?')) return;
+  localStorage.removeItem('sdg_gas_url');
+  alert('✅ 기본값으로 복원되었습니다. 페이지를 새로고침합니다.');
+  location.reload();
+}
+
 function saveGasUrl() {
   const input = document.getElementById('gas-url-input');
   const url = input.value.trim();
-  if (!url) { alert('URL을 입력해주세요.'); return; }
+  if (!url) {
+    alert('URL을 입력해주세요.');
+    return;
+  }
   if (!url.startsWith('https://script.google.com/')) {
     alert('올바른 Apps Script URL이 아닙니다.\nhttps://script.google.com/ 으로 시작해야 해요.');
     return;
   }
   if (!url.endsWith('/exec')) {
-    if (!confirm('이 URL은 일반적인 웹 앱 형식(/exec 로 끝남)이 아닙니다.\n그래도 저장할까요?')) return;
+    if (!confirm('이 URL은 일반적인 Web App 형식(/exec로 끝남)이 아닙니다.\n그래도 저장할까요?')) return;
   }
   localStorage.setItem('sdg_gas_url', url);
-  GAS_URL = url;
-  populateSettingsInputs();
+  APP_STATE.gasUrl = url;
   const studentUrlDisplay = document.getElementById('student-url-display');
-  if (studentUrlDisplay) studentUrlDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  showToast('✅ 웹 앱 URL이 저장되었습니다! 아래 학생용 주소를 복사해 공유하세요.');
+  if (studentUrlDisplay) {
+    studentUrlDisplay.value = getStudentUrl();
+    studentUrlDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  showToast('✅ 본부 URL이 저장되었습니다! 아래 학생용 주소를 복사해 공유하세요.');
   loadStudentList();
-  loadSidebarStats();
 }
 
-function openSpreadsheet() {
-  if (CACHED_SHEET_URL) { window.open(CACHED_SHEET_URL, '_blank'); return; }
-  if (!HAS_GSR) { alert('스프레드시트는 앱스스크립트로 실행할 때만 바로 열 수 있어요.\n구글 드라이브에서 직접 열어주세요.'); return; }
-  gsr('getSpreadsheetUrl').then(function (u) {
-    if (u) { CACHED_SHEET_URL = u; window.open(u, '_blank'); }
-    else alert('스프레드시트 주소를 가져오지 못했습니다.');
-  }).catch(function () {
-    alert('스프레드시트 주소를 가져오지 못했습니다.');
-  });
+function saveSpreadsheetUrl() {
+  const input = document.getElementById('spreadsheet-url-input');
+  const url = input.value.trim();
+  if (!url) {
+    alert('URL을 입력해주세요.');
+    return;
+  }
+  if (!url.startsWith('https://docs.google.com/spreadsheets/')) {
+    alert('올바른 Google Sheets URL이 아닙니다.\nhttps://docs.google.com/spreadsheets/ 으로 시작해야 해요.');
+    return;
+  }
+  localStorage.setItem('sdg_spreadsheet_url', url);
+  alert('✅ 스프레드시트 주소가 저장되었습니다.');
 }
 
 async function loadSidebarStats() {
-  if (!isSheetConnected()) {
-    const msgEl = document.getElementById('sb-msg');
-    if (msgEl) msgEl.innerText = '체험 모드 — 시트 연결 시 반 현황이 표시됩니다 📋';
-    ['sb-students','sb-records','sb-tasks','sb-avg'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.innerText = '-';
-    });
-    return;
-  }
+  if (!APP_STATE.gasUrl || !APP_STATE.gasUrl.startsWith('https')) return;
   try {
-    const s = await apiGetClassStats();
-    if (!s) return;
+    const res = await fetch(APP_STATE.gasUrl + '?action=getClassStats');
+    if (!res.ok) return;
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch (e) { return; }
+    if (!data.stats) return;
+    const s = data.stats;
     const setText = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
     setText('sb-students', s.totalStudents);
     setText('sb-records', s.totalRecords);
@@ -2173,25 +2229,34 @@ async function loadTeacherStats() {
   loadingEl.innerHTML = '📡 데이터를 불러오는 중...';
   contentEl.style.display = 'none';
 
-  if (!isSheetConnected()) {
-    loadingEl.innerHTML = HAS_GSR
-      ? '⚠️ 시트에 연결되어 있지 않습니다.'
-      : '⚠️ 아직 시트에 연결되지 않았어요.<br><b>⚙️ 설정</b> 탭에서 웹 앱 URL을 저장하면 통계가 표시됩니다.';
+  if (APP_STATE.gasUrl === 'PASTE_YOUR_GAS_WEB_APP_URL_HERE' || !APP_STATE.gasUrl.startsWith('https')) {
+    loadingEl.innerHTML = '⚠️ 서버 URL이 설정되지 않았습니다.';
     return;
   }
 
   try {
-    const stats = await apiGetClassStats();
-    if (!stats || stats.totalRecords === 0) {
+    const res = await fetch(APP_STATE.gasUrl + '?action=getClassStats');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('JSON parse failed. Raw response:', text.substring(0, 200));
+      loadingEl.innerHTML = '⚠️ 서버가 통계 기능을 인식하지 못했습니다.<br><br><b>해결 방법</b><br>1. Google Apps Script 편집기 열기<br>2. <b>배포 → 배포 관리 → ✏️ 편집</b><br>3. 버전을 <b>"새 버전"</b>으로 선택 후 배포<br>4. 같은 URL이 유지되면 그대로 사용';
+      return;
+    }
+    if (!data.stats || data.stats.totalRecords === 0) {
       loadingEl.innerHTML = '아직 우리 반의 기록이 없어요. 친구들이 실천을 시작하면 통계가 나타납니다! ✨';
       return;
     }
-    renderClassStats(stats);
+    renderClassStats(data.stats);
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
   } catch (err) {
     console.error('Class stats error:', err);
-    loadingEl.innerHTML = '❌ 데이터를 불러올 수 없습니다.<br><span style="font-size:0.65rem; color:#94a3b8; word-break:break-all; display:block; margin-top:6px;">오류: ' + (err.message || err) + '</span>';
+    const safeUrl = (APP_STATE.gasUrl || '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+    loadingEl.innerHTML = '❌ 데이터를 불러올 수 없습니다.<br>설정 탭에서 본부 URL을 확인해주세요.<br><span style="font-size:0.65rem; color:#94a3b8; word-break:break-all; display:block; margin-top:6px;">사용 중 URL: ' + safeUrl + '<br>오류: ' + (err.message || err) + '</span>';
   }
 }
 
@@ -2502,16 +2567,8 @@ async function autoSave() {
   try {
     // 시트가 연동된 경우에만 서버로 전송
     if (connected) {
-      const payload = {
-        heroName: APP_STATE.heroName,
-        progress: APP_STATE.progress,
-        tasks: tasksDisplayString,
-        reflection: reflection,
-        myGoal: APP_STATE.myGoal,
-        startDate: APP_STATE.startDate,
-        endDate: APP_STATE.endDate
-      };
-      await apiSaveRecord(payload);
+      const postData = { ...logData, tasks: tasksDisplayString };
+      await fetch(APP_STATE.gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(postData) });
     }
     // localStorage에는 항상 저장
     const hKey = 'sdg_history_' + APP_STATE.heroName;
@@ -2547,8 +2604,7 @@ function resetChallenge() {
 }
 function saveState() {
   localStorage.setItem('sdg_hero_v6', JSON.stringify(APP_STATE));
-  // 시트 연결 시에만 설정 저장 — 데모 모드는 저장하지 않아 다음 로그인 시 이전 데이터가 보이지 않게
-  if (APP_STATE.heroName && isSheetConnected()) {
+  if (APP_STATE.heroName) {
     localStorage.setItem('sdg_hero_config_' + APP_STATE.heroName, JSON.stringify(APP_STATE));
   }
 }
@@ -2566,54 +2622,13 @@ async function toggleHistory() {
     }
   }
   goToStep(4);
-
-  const container = document.getElementById('history-container');
-  if (container) container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">📡 본부(구글 시트)에서 기록을 불러오는 중...</div>';
-
-  await fetchAndRenderHistory();
+  renderHistory();
 }
-
-async function fetchAndRenderHistory() {
+function renderHistory() {
   const hKey = 'sdg_history_' + APP_STATE.heroName;
-  let history = JSON.parse(localStorage.getItem(hKey) || '[]');
-
-  if (isSheetConnected() && APP_STATE.heroName) {
-    try {
-      const data = await apiGetHistory(APP_STATE.heroName);
-      if (Array.isArray(data)) {
-        history = data.map(item => {
-          let parsedTasks = [];
-          if (typeof item.tasks === 'string' && item.tasks.trim()) {
-             parsedTasks = item.tasks.split('\n').map(line => {
-                const parts = line.split(',');
-                return {
-                   theme: (parts[0] || '').trim(),
-                   task: (parts[1] || '').trim(),
-                   score: Number(parts[2] || 0),
-                   icon: '🌱'
-                };
-             });
-          } else if (Array.isArray(item.tasks)) {
-             parsedTasks = item.tasks;
-          }
-          return { ...item, tasks: parsedTasks };
-        });
-        localStorage.setItem(hKey, JSON.stringify(history));
-      }
-    } catch (e) {
-      console.warn("History fetch failed, using local", e);
-      alert('⚠️ 구글 시트 본부와 연결할 수 없습니다.\n\n원인: ' + (e.message || e) + '\n\n잠시 후 다시 시도하거나, 앱을 웹 앱 URL로 열었는지 확인해주세요.');
-    }
-  }
-  renderHistoryUI(history);
-}
-
-function renderHistoryUI(history) {
+  const history = JSON.parse(localStorage.getItem(hKey) || '[]');
   const container = document.getElementById('history-container');
 
-  const connected = isSheetConnected();
-
-  // 다짐 박스
   const goalElem = document.getElementById('history-display-goal');
   const visionBox = document.getElementById('history-vision-box');
   if (APP_STATE.myGoal) {
@@ -2623,29 +2638,13 @@ function renderHistoryUI(history) {
     if (visionBox) visionBox.style.display = 'none';
   }
 
-  // 기록이 하나도 없을 때 (연동/체험 공통)
-  if (!history || history.length === 0) {
-    if (container) container.innerHTML = `
-      <div style="text-align:center; padding:40px; color:var(--text-muted);">
-        <div style="font-size:2rem; margin-bottom:12px;">📋</div>
-        <p style="font-weight:800; margin-bottom:8px;">아직 기록이 없어요!</p>
-        <p style="font-size:0.85rem;">${connected
-          ? '오늘의 행동을 먼저 기록해보세요!'
-          : '오늘의 행동을 기록하면<br>이 기기에 발자취가 차곡차곡 쌓입니다.'}</p>
-      </div>`;
-    const chartContainer = document.getElementById('history-chart-container');
-    if (chartContainer) chartContainer.innerHTML = '';
-    if (visionBox) visionBox.style.display = 'none';
+  if (history.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">아직 기록이 없어요. 오늘의 행동을 먼저 기록해보세요!</div>';
+    document.getElementById('history-chart-container').innerHTML = '';
     return;
   }
 
-  // 체험 모드면 "이 기기에만 저장된 기록"임을 안내하는 배너를 위에 붙인다.
-  const demoBanner = connected ? '' : `
-    <div style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; font-size:0.75rem; font-weight:700; padding:10px 14px; border-radius:12px; margin-bottom:14px; line-height:1.5; text-align:center;">
-      💡 체험 모드예요. 아래 발자취는 <b>이 기기에만</b> 저장된 기록입니다.<br>다른 기기·브라우저에서는 보이지 않아요.
-    </div>`;
-
-  container.innerHTML = demoBanner + history.map(item => {
+  container.innerHTML = history.map(item => {
     const tasks = Array.isArray(item.tasks) ? item.tasks : [];
     return `
     <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 25px; border: 1px solid #e2e8f0;">
@@ -2653,7 +2652,7 @@ function renderHistoryUI(history) {
         <span style="font-size: 0.8rem; color: #64748b; font-weight: 800;">🕒 ${item.timestamp}</span>
         <span style="background: var(--primary); color: white; padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">성장 ${item.progress}%</span>
       </div>
-
+      
       <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
         <thead>
           <tr style="background: #fff; border-bottom: 1px solid #f1f5f9;">
@@ -2742,19 +2741,19 @@ function renderHistoryChart(history) {
       <!-- Main Axes -->
       <line x1="${padding}" y1="${h - padding}" x2="${w - padding}" y2="${h - padding}" stroke="#94a3b8" stroke-width="2" />
       <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${h - padding}" stroke="#94a3b8" stroke-width="2" />
-
+      
       <!-- Area Fill -->
       <path d="${areaD}" fill="url(#areaGrad)" />
 
       <!-- Line Path -->
       <path d="${pathD}" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
-
+      
       <!-- Data Points -->
       ${points.map(p => `
         <circle cx="${p.x}" cy="${p.y}" r="5" fill="white" stroke="var(--primary)" stroke-width="3" />
         <text x="${p.x}" y="${p.y - 12}" text-anchor="middle" font-size="10" font-weight="900" fill="var(--primary)">${p.val}%</text>
       `).join('')}
-
+      
       <!-- X Axis Labels (Dates) -->
       ${points.map((p) => `
         <text x="${p.x}" y="${h - 10}" text-anchor="middle" font-size="9" fill="#94a3b8" font-weight="700">${p.date}</text>
@@ -2775,9 +2774,20 @@ function teacherReset() {
   }
 }
 
+function openSpreadsheet() {
+  const url = localStorage.getItem('sdg_spreadsheet_url');
+  if (!url) {
+    alert('먼저 위쪽 "스프레드시트 주소" 칸에 URL을 입력하고 저장해주세요.');
+    const sheetInput = document.getElementById('spreadsheet-url-input');
+    if (sheetInput) sheetInput.focus();
+    return;
+  }
+  window.open(url, '_blank');
+}
+
 async function generateSheetDashboard(event) {
-  if (!isSheetConnected()) {
-    alert('시트에 연결되어 있지 않습니다. (앱스스크립트 웹 앱으로 실행해주세요)');
+  if (APP_STATE.gasUrl === 'PASTE_YOUR_GAS_WEB_APP_URL_HERE' || !APP_STATE.gasUrl.startsWith('https')) {
+    alert('먼저 본부 URL을 설정해주세요.');
     return;
   }
   if (!confirm('📊 스프레드시트에 "📊 대시보드" 시트를 생성/갱신합니다.\n기존 대시보드가 있으면 새 데이터로 덮어씁니다.\n진행할까요?')) return;
@@ -2787,20 +2797,24 @@ async function generateSheetDashboard(event) {
   if (btn) { btn.disabled = true; btn.innerText = '⏳ 생성 요청 전송 중...'; }
 
   try {
-    await apiGenerateDashboard();
-    if (btn) { btn.disabled = false; btn.innerText = originalText; }
-    alert(HAS_GSR
-      ? '✅ 스프레드시트의 "📊 대시보드" 시트가 생성/갱신되었습니다.'
-      : '✅ 대시보드 생성 요청을 보냈습니다.\n10~30초 후 스프레드시트의 "📊 대시보드" 시트를 확인해주세요.');
+    await fetch(APP_STATE.gasUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({ action: 'generateDashboard' })
+    });
+    setTimeout(function() {
+      if (btn) { btn.disabled = false; btn.innerText = originalText; }
+      alert('✅ 대시보드 생성 요청을 보냈습니다.\n10~30초 후 스프레드시트의 "📊 대시보드" 시트를 확인해주세요.\n(차트가 들어가서 시간이 좀 걸려요)');
+    }, 1500);
   } catch (err) {
     if (btn) { btn.disabled = false; btn.innerText = originalText; }
-    alert('❌ 오류: ' + (err.message || err));
+    alert('❌ 오류: ' + err.message);
   }
 }
 
 async function clearSpreadsheetData() {
-  if (!isSheetConnected()) {
-    alert('시트에 연결되어 있지 않습니다. (앱스스크립트 웹 앱으로 실행해주세요)');
+  if (APP_STATE.gasUrl === 'PASTE_YOUR_GAS_WEB_APP_URL_HERE') {
+    alert("먼저 script.js 상단에 GAS 웹 앱 URL을 붙여넣어 주세요!");
     return;
   }
 
@@ -2809,13 +2823,14 @@ async function clearSpreadsheetData() {
     if (pw !== '1234') { alert("암호가 틀렸습니다."); return; }
 
     try {
-      await apiClearData();
-      alert(HAS_GSR
-        ? "✅ 시트의 모든 기록이 삭제되었습니다."
-        : "🧹 삭제 요청을 보냈습니다. 잠시 후 시트에서 확인해주세요.");
-      loadSidebarStats();
+      await fetch(APP_STATE.gasUrl, {
+        method: 'POST',
+        mode: 'no-cors', // Use no-cors to avoid CORS issues with GAS POST
+        body: JSON.stringify({ action: 'clearData' })
+      });
+      alert("기록 삭제 요청이 본부에 전송되었습니다. 잠시 후 시트를 확인하세요.");
     } catch (err) {
-      alert("초기화 요청 중 오류가 발생했습니다: " + (err.message || err));
+      alert("초기화 요청 중 오류가 발생했습니다. (잠시 후 다시 시도)");
       console.error(err);
     }
   }
