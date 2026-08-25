@@ -4,8 +4,1142 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SDG's 리틀 히어로 | 나의 지구 지키기 프로젝트</title>
-  <link rel="stylesheet" href="index.css">
-  <!-- AOS for animations might be overkill, sticking to standard CSS for efficiency -->
+  <style>
+/*
+  SDG Little Hero - Premium 'Wowed' Design System (V2)
+  Target: 5th-6th Grade Students
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+:root {
+  --primary: #10b981; /* Emerald */
+  --secondary: #6366f1; /* Indigo */
+  --accent: #f59e0b; /* Amber */
+  --bg-main: #f8fafc;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --radius-xl: 32px;
+  --radius-md: 16px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #ecfdf5, #f0fdfa, #f1f5f9);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  color: var(--text-main);
+  overflow-x: hidden;
+  padding: 28px 10px 15px;
+}
+
+/* App Container - Responsive & Fluid */
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-premium);
+  border-radius: var(--radius-xl);
+  height: 92vh;
+  max-height: 900px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative; /* Added for absolute modal positioning */
+}
+
+/* Landscape Mode for Tablet/Desktop */
+@media (min-width: 1024px) {
+  /* body를 정확히 뷰포트 높이로 고정해 페이지 레벨 스크롤 차단 */
+  body {
+    height: 100dvh;
+    min-height: unset;
+    overflow: hidden;
+    padding: 12px 16px; /* 모바일보다 여백 줄여 콘텐츠 공간 확보 */
+    align-items: center; /* 카드를 수직 중앙에 */
+  }
+
+  .app-container {
+    max-width: 1200px;
+    flex-direction: row;
+    height: calc(100dvh - 24px); /* body 상하 padding 합산 제외 */
+    max-height: none; /* 모바일의 900px 캡 해제 */
+  }
+
+  .side-banner {
+    display: flex !important;
+    flex: 0 0 300px; /* 고정 폭, 축소 방지 */
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 36px 32px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .side-banner::before {
+    content: "SDG";
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    font-size: 10rem;
+    font-weight: 900;
+    opacity: 0.1;
+    color: white;
+    pointer-events: none;
+  }
+
+  /* 내부 column 래퍼도 min-height 제약 */
+  .content-col {
+    min-height: 0;
+    flex: 1;
+  }
+
+  main {
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  /* 랜드스케이프에서 로그인 상단 여백 과도하지 않게 */
+  #step-login {
+    padding-top: 40px !important;
+  }
+}
+
+.side-banner {
+  display: none; /* Mobile hidden */
+}
+
+header {
+  padding: 6px 30px;
+  background: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid #f1f5f9;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 1.6rem;
+  font-weight: 900;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+main {
+  flex: 1;
+  min-height: 0; /* flex 자식이 콘텐츠 크기로 팽창하지 않도록 강제 — 없으면 overflow:hidden에 잘림 */
+  padding: 8px 25px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  /* Hide Scrollbar */
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+main::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Premium Card Style */
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  border: 1px solid #f1f5f9;
+  animation: slideUp 0.6s ease-out;
+}
+
+/* Login Screen Stabilization */
+#step-login {
+  display: flex;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  padding-top: 100px !important;
+  min-height: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  text-align: center !important;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+/* Input Fields */
+input[type="text"], input[type="date"], textarea, input[type="number"] {
+  width: 100%;
+  padding: 15px 20px;
+  border-radius: var(--radius-md);
+  border: 2px solid #f1f5f9;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: all 0.3s;
+  outline: none;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+select {
+  color: var(--text-main);
+  background-color: white;
+}
+
+/* Theme Selection Card V6 */
+.themes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.theme-card {
+  background: white;
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #f1f5f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-premium);
+}
+
+.theme-card.active {
+  background: #fff;
+  border-right: 2px solid var(--primary);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1);
+}
+
+.task-selection-list {
+  margin-top: 10px;
+  background: #f8fafc;
+  padding: 15px;
+  border-radius: var(--radius-md);
+  border: 1px solid #f1f5f9;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.task-selection-list label {
+  transition: all 0.2s;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.task-selection-list label:hover {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.custom-task-box {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Heart Rating Interaction */
+.heart-rating {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.heart-rating span {
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
+}
+
+.heart-rating span:hover {
+  transform: scale(1.4) rotate(10deg);
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  font-size: 1.1rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 6px 0 #059669;
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: white;
+  box-shadow: 0 6px 0 #4f46e5;
+}
+
+.btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* Progress Dashboard */
+.progress-box {
+  background: linear-gradient(135deg, white, #f0fdfa);
+  padding: 15px 20px !important;
+  margin-bottom: 12px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 100px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), #34d399);
+  border-radius: 100px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+/* Dashboard Specific Layout */
+#step-dashboard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mission-mini-card {
+  background: white;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
+  animation: slideUp 0.4s ease-out;
+}
+
+.heart-rating-mini {
+  display: flex;
+  gap: 4px;
+}
+
+.heart-rating-mini span {
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+  color: #e2e8f0;
+}
+
+.active-missions-area {
+  flex: 1;
+  overflow-y: auto; /* Just in case user adds > 10 items, but we aim for fixed */
+  padding-right: 5px;
+}
+
+/* Hide scrollbar for missions area */
+.active-missions-area {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.active-missions-area::-webkit-scrollbar {
+  display: none;
+}
+
+.reflection-box {
+  margin-top: auto;
+  border-radius: var(--radius-md) !important;
+  padding: 12px !important;
+  position: relative;
+}
+
+.reflection-box input[type="text"] {
+  width: 100%;
+  height: 38px;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: var(--text-main);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.reflection-box input[type="text"]:focus {
+  border-color: var(--primary);
+}
+
+.history-button-wrap {
+  position: relative;
+  margin-top: 6px;
+}
+.save-status-inline {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: white;
+  background: rgba(15, 23, 42, 0.55);
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+.save-status-inline:empty {
+  display: none;
+}
+
+/* SDG Intro - Hero & Feature Cards */
+.sdg-intro-hero {
+  background: linear-gradient(135deg, #ecfdf5, #f0f9ff);
+  padding: 18px 16px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+  text-align: center;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+.sdg-intro-emoji {
+  font-size: 2.6rem;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+  animation: floatGently 3s ease-in-out infinite;
+}
+@keyframes floatGently {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.sdg-intro-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 8px;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+.sdg-intro-tagline {
+  font-size: 0.88rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  font-weight: 700;
+}
+.sdg-intro-tagline strong {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.sdg-intro-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.sdg-intro-feature {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border-left: 5px solid var(--accent-color, var(--primary));
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  text-align: left;
+}
+.sdg-intro-feature .feature-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent-color, var(--primary)) 14%, white);
+  border-radius: 10px;
+}
+.sdg-intro-feature .feature-text {
+  flex: 1;
+  min-width: 0;
+}
+.sdg-intro-feature h4 {
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--text-main);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+.sdg-intro-feature p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  font-weight: 500;
+  word-break: keep-all;
+}
+
+/* SDG Gallery & Item Buttons */
+.sdg-gallery {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.04);
+}
+
+.sdg-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px 4px 14px;
+  min-height: 128px;
+  background: white;
+  border: 2px solid #f1f5f9;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.sdg-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--sdg-color, var(--primary));
+}
+
+.sdg-item .sdg-num {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 0.55rem;
+  font-weight: 900;
+  color: var(--sdg-color, var(--primary));
+  background: color-mix(in srgb, var(--sdg-color, var(--primary)) 12%, white);
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.sdg-item img {
+  width: 100%;
+  max-width: 70px;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  transition: transform 0.2s;
+}
+
+.sdg-item .sdg-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--text-main);
+  text-align: center;
+  word-break: keep-all;
+  line-height: 1.2;
+}
+
+.sdg-item:hover {
+  transform: translateY(-4px);
+  border-color: var(--sdg-color, var(--primary));
+  box-shadow: 0 12px 18px -4px color-mix(in srgb, var(--sdg-color, var(--primary)) 25%, transparent);
+}
+.sdg-item:hover img {
+  transform: scale(1.05);
+}
+
+.sdg-item:active {
+  transform: scale(0.95);
+  background: color-mix(in srgb, var(--sdg-color, var(--primary)) 8%, white);
+}
+
+/* Sidebar Live Stats (desktop only) */
+.sidebar-stats {
+  width: 100%;
+  margin-top: 36px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 18px;
+  padding: 18px 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.sidebar-stats-title {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: white;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+.sidebar-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.sidebar-stat {
+  background: rgba(255,255,255,0.22);
+  padding: 12px 6px;
+  border-radius: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.sb-num {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: white;
+  line-height: 1.1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.sb-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.95);
+  font-weight: 800;
+  margin-top: 4px;
+}
+.sidebar-stats-msg {
+  font-size: 0.78rem;
+  color: white;
+  font-weight: 800;
+  text-align: center;
+  padding: 8px 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+}
+
+/* Teacher Mini Bar Chart */
+.hero-mini-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 36px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.hero-mini-row:last-child { margin-bottom: 0; }
+.hero-mini-name {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hero-mini-track {
+  background: #f1f5f9;
+  height: 18px;
+  border-radius: 100px;
+  overflow: hidden;
+}
+.hero-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #34d399);
+  border-radius: 100px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 4px;
+}
+.hero-mini-val {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: var(--primary);
+  text-align: right;
+}
+
+/* Teacher Menu - Tabs */
+.teacher-tabs {
+  display: flex;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+.teacher-tab {
+  flex: 1;
+  padding: 9px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.teacher-tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* Earth Impact Card */
+.earth-impact-card {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0, #6ee7b7);
+  padding: 18px 18px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  box-shadow: 0 6px 12px -2px rgba(16, 185, 129, 0.25);
+}
+.earth-impact-header {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.earth-emoji {
+  font-size: 2.6rem;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.12));
+  animation: floatGently 3s ease-in-out infinite;
+}
+.earth-impact-label {
+  font-size: 0.75rem;
+  color: #065f46;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.earth-impact-score {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #064e3b;
+  line-height: 1;
+}
+.earth-impact-bar-bg {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.55);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.earth-impact-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #059669, #10b981);
+  border-radius: 100px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.earth-impact-msg {
+  font-size: 0.78rem;
+  color: #065f46;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Stats Summary */
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: white;
+  padding: 12px 8px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.summary-num {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--secondary);
+  line-height: 1.1;
+}
+.summary-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-top: 2px;
+  word-break: keep-all;
+}
+
+/* Setup / Class Connection Card */
+.setup-card {
+  border: 2px solid #fde047 !important;
+  background: #fefce8 !important;
+  margin-bottom: 12px;
+}
+.setup-guide {
+  background: white;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #fde68a;
+}
+.setup-guide summary {
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #92400e;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.setup-guide summary::before {
+  content: '▶';
+  font-size: 0.7rem;
+  color: #b45309;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.setup-guide[open] summary::before {
+  transform: rotate(90deg);
+}
+.setup-guide ol {
+  margin-top: 12px;
+  padding-left: 4px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: #78350f;
+  list-style: none;
+  counter-reset: setup-step;
+}
+.setup-guide ol li {
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+.setup-guide ol li:last-child {
+  margin-bottom: 0;
+}
+.setup-guide ol li b {
+  display: block;
+  color: #92400e;
+  font-weight: 900;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+.setup-guide ol li i {
+  color: #b45309;
+  font-style: normal;
+  background: #fef3c7;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.url-config {
+  margin-bottom: 12px;
+}
+.url-config:last-child {
+  margin-bottom: 0;
+}
+.url-config label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+.url-required {
+  font-size: 0.65rem;
+  color: #dc2626;
+  font-weight: 800;
+  margin-left: 4px;
+}
+.url-input-row {
+  display: flex;
+  gap: 6px;
+}
+.url-input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-family: 'Outfit', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+  background: white;
+}
+.url-input-row input:focus {
+  border-color: var(--primary);
+}
+.url-input-row button {
+  padding: 8px 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.25);
+}
+.url-input-row button:hover {
+  background: #059669;
+}
+.config-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.config-hint code {
+  background: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+.btn-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  color: #b45309;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 2px;
+  text-decoration: underline;
+  font-family: inherit;
+}
+.btn-link:hover {
+  color: #78350f;
+}
+
+/* Reset Mini Cards (side-by-side) */
+.reset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.reset-mini-card {
+  background: white;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 2px solid;
+}
+.reset-mini-card h4 {
+  font-size: 0.85rem;
+  font-weight: 900;
+  margin: 0;
+}
+.reset-mini-card p {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+  word-break: keep-all;
+}
+.reset-mini-card button {
+  padding: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: auto;
+}
+.reset-device {
+  border-color: #fda4af;
+  background: #fff1f2;
+}
+.reset-device h4 { color: #e11d48; }
+.reset-device p { color: #9f1239; }
+.reset-device button {
+  background: #e11d48;
+  box-shadow: 0 3px 0 #9f1239;
+}
+.reset-sheet {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+.reset-sheet h4 { color: #475569; }
+.reset-sheet p { color: #64748b; }
+.reset-sheet button {
+  background: #475569;
+  box-shadow: 0 3px 0 #334155;
+}
+
+/* Daily Practice Chart (SVG line chart) */
+.daily-chart {
+  width: 100%;
+  min-height: 120px;
+  padding: 2px 0;
+}
+.daily-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Custom Scrollbar hidden globally */
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+/* Modal Styles V7 */
+.modal-backdrop {
+  position: absolute; /* Changed from fixed to absolute */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.3s;
+  border-radius: var(--radius-xl); /* Match container */
+}
+
+.modal-content {
+  background: white;
+  width: 92%;
+  max-width: 450px;
+  max-height: 95%; /* Increased to give more room */
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  padding: 22px; /* Slightly reduced padding */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Hide Scrollbar */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.modal-content::-webkit-scrollbar {
+  display: none;
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: #e2e8f0;
+  color: var(--text-main);
+}
+
+.custom-task-textarea {
+  width: 100%;
+  height: 65px; /* Reduced from 100px to fit on one screen */
+  padding: 12px 15px;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  resize: none;
+  transition: all 0.3s;
+}
+
+.custom-task-textarea:focus {
+  border-color: var(--primary);
+  background: #f0fdf4;
+}
+
+.task-option-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+  </style>
 </head>
 <body>
   <div class="app-container">
@@ -42,8 +1176,8 @@
               <span style="font-size: 2.5rem; animation: bounce 2s infinite; display: inline-block;">🌟</span>
               <h2 style="font-size: 1.8rem; font-weight: 900; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin: 0; white-space: nowrap;">히어로 출석체크!</h2>
             </div>
-            
-            
+
+
             <div style="width: 100%; position: relative; margin-bottom: 25px;">
               <select id="hero-name" style="width: 100%; padding: 18px; font-size: 1.1rem; border-radius: 20px; border: 2px solid #e2e8f0; background: white; appearance: none; text-align: center; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.3s; color: var(--text-main);">
                 <option value="">이름을 불러오는 중...</option>
@@ -52,7 +1186,7 @@
             </div>
 
             <button class="btn btn-primary" style="width: 100%;" onclick="handleLogin()">히어로 입장하기 🚀</button>
-            
+
             <div id="login-loader" style="display: none; margin-top: 20px; font-size: 0.9rem; color: var(--primary); font-weight: bold;">
               본부와 연결 중입니다... 📡
             </div>
@@ -127,7 +1261,7 @@
         <!-- STEP 2: Mission Summary (NEW) -->
         <section id="step-summary" class="card" style="display: none; padding: 20px;">
           <h2 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 15px; text-align: center;">선택한 미션 확인 🔍</h2>
-          
+
           <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 15px; margin-bottom: 20px;">
             <!-- Left: Missions -->
             <div style="background: #f8fafc; padding: 15px; border-radius: 20px; border: 1px dashed var(--primary); display: flex; flex-direction: column;">
@@ -152,7 +1286,7 @@
         <!-- STEP 2.5: Challenge Period Setup -->
         <section id="step-vision" class="card" style="padding: 25px; display: none;">
           <h2 style="font-size: 1.3rem; color: var(--secondary); margin-bottom: 20px; text-align: center;">챌린지 기간 설정 📅</h2>
-          
+
           <div style="margin-bottom: 25px;">
             <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--secondary); font-weight: 800;">언제부터 언제까지 할까요?</h3>
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
@@ -160,12 +1294,12 @@
               <span style="font-weight: 800; color: #94a3b8;">~</span>
               <input type="date" id="end-date" onchange="updateDurationDisplay()" style="flex: 1; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 0.95rem;">
             </div>
-            
+
             <div id="duration-info" style="background: #f0f9ff; padding: 15px; border-radius: 15px; border: 1px solid #bae6fd; text-align: center;">
               <span style="font-size: 0.9rem; color: #0369a1; font-weight: 800;">총 <span id="setup-total-days" style="font-size: 1.2rem; color: #0284c7;">0</span>일 동안의 도전입니다! 🚀</span>
             </div>
           </div>
-          
+
           <button class="btn btn-primary" onclick="confirmMissions()" style="width: 100%; padding: 12px; font-size: 1rem;">최종 미션 확정하기! 🔥</button>
         </section>
 
@@ -226,11 +1360,11 @@
               <h3 id="history-display-goal" style="font-size: 1rem; font-weight: 900; color: #78350f; margin: 0;">지구를 구하는 멋진 히어로!</h3>
             </div>
           </div>
-          
+
           <div style="display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 20px;">
             <!-- Left: Table Records -->
             <div id="history-container"></div>
-            
+
             <!-- Right: Cumulative Growth Graph -->
             <div class="card" style="padding: 20px; background: white; height: fit-content; border: 1px solid #e2e8f0;">
               <h3 style="font-size: 1rem; margin-bottom: 20px; color: var(--primary); text-align: center;">🌱 히어로 성장 그래프</h3>
@@ -292,57 +1426,54 @@
           <!-- TAB: SETTINGS -->
           <div id="teacher-tab-settings" class="teacher-tab-content" style="display:none;">
 
-            <!-- Class Connection Setup -->
-            <div class="card setup-card">
-              <h3 style="font-size: 1rem; margin-bottom: 10px; color: #92400e;">🔗 우리 학급에 연결하기</h3>
-              <p style="font-size: 0.78rem; color: #78350f; line-height: 1.5; margin-bottom: 10px;">다른 선생님도 이 앱을 자기 학급용으로 쓸 수 있어요. 아래 가이드를 따라 우리 학급 시트와 연결해주세요.</p>
+            <!-- 앱스스크립트 모드: 이 시트에 직접 연결됨 (JS가 표시/숨김) -->
+            <div class="card setup-card" id="settings-connected-card" style="display:none;">
+              <h3 style="font-size: 1rem; margin-bottom: 8px; color: #166534;">✅ 이 시트에 직접 연결됨</h3>
+              <p style="font-size: 0.78rem; color: #15803d; line-height: 1.5;">이 앱은 선생님 구글 시트에서 <b>직접 실행</b> 중입니다. 모든 기록은 <b>이 시트에만</b> 저장돼요. 아래 학생용 주소를 공유하세요.</p>
+            </div>
+
+            <!-- 정적 호스팅(깃허브) 모드: 웹 앱 URL 입력 (JS가 표시/숨김) -->
+            <div class="card setup-card" id="settings-url-card" style="display:none;">
+              <h3 style="font-size: 1rem; margin-bottom: 10px; color: #92400e;">🔗 우리 학급 시트에 연결하기</h3>
+              <p style="font-size: 0.78rem; color: #78350f; line-height: 1.5; margin-bottom: 10px;">지금은 <b>정적 호스팅(예: 깃허브)</b>에서 실행 중이에요. 우리 학급 데이터를 쓰려면 아래에 앱스스크립트 <b>웹 앱 URL</b>을 붙여넣어 주세요.</p>
 
               <details class="setup-guide">
                 <summary>📚 처음 사용하는 선생님이라면 (3단계 가이드)</summary>
                 <ol>
                   <li>
                     <b>① 스프레드시트 사본 만들기</b>
-                    제공받은 SDG 리틀 히어로 템플릿 시트를 열고 <b>파일 → 사본 만들기</b>를 누르세요. 사본 이름은 <i>"우리반 SDG 히어로"</i> 처럼 자유롭게 지정합니다. (Apps Script 코드도 자동으로 함께 복사됩니다.)
+                    제공받은 SDG 리틀 히어로 템플릿 시트를 열고 <b>파일 → 사본 만들기</b>. (Apps Script 코드도 함께 복사됩니다.)
                   </li>
                   <li>
                     <b>② Apps Script 새 배포</b>
-                    내 사본 시트에서 <b>확장 프로그램 → Apps Script</b>를 열고, 우상단 <b>배포 → 새 배포</b> 클릭. 유형은 <b>웹 앱</b>, ⚠️ 액세스 권한은 반드시 <i>모든 사용자(Anyone)</i> 로 설정해야 합니다 (Google 계정 보유자/본인만으로 두면 데이터를 못 받아옵니다). 설정 후 <b>배포</b>를 누르고 표시된 <b>웹 앱 URL</b>을 복사합니다.
+                    내 사본 시트에서 <b>확장 프로그램 → Apps Script</b> → 우상단 <b>배포 → 새 배포</b>. 유형 <b>웹 앱</b>, ⚠️ 액세스 권한 <i>모든 사용자(Anyone)</i>. <b>배포</b> 후 표시된 <b>웹 앱 URL</b> 복사.
                   </li>
                   <li>
-                    <b>③ 아래 두 칸에 URL 붙여넣기</b>
-                    "본부 URL"엔 위에서 받은 웹 앱 URL을, "스프레드시트 주소"엔 사본 시트의 브라우저 주소창 URL을 각각 붙여넣고 저장. 저장 후 페이지를 새로고침(F5)하면 우리 학급 데이터가 표시됩니다.
+                    <b>③ 아래 칸에 URL 붙여넣기</b>
+                    복사한 웹 앱 URL(끝이 <i>/exec</i>)을 붙여넣고 저장하면 우리 학급 데이터가 연결됩니다.
                   </li>
                 </ol>
               </details>
 
               <div class="url-config">
-                <label>📡 본부(Apps Script) URL <span class="url-required">*필수</span></label>
+                <label>📡 웹 앱(Apps Script) URL <span class="url-required">*필수</span></label>
                 <div class="url-input-row">
                   <input id="gas-url-input" type="text" placeholder="https://script.google.com/macros/s/.../exec">
                   <button onclick="saveGasUrl()">저장</button>
                 </div>
                 <p class="config-hint">현재 사용 중: <code id="gas-url-current" style="font-size: 0.65rem; word-break: break-all;"></code></p>
-                <button class="btn-link" onclick="resetGasUrlToDefault()">↩️ 기본 URL로 복원</button>
-              </div>
-
-              <div class="url-config">
-                <label>📊 스프레드시트 주소</label>
-                <div class="url-input-row">
-                  <input id="spreadsheet-url-input" type="text" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-                  <button onclick="saveSpreadsheetUrl()">저장</button>
-                </div>
-                <p class="config-hint">아래 '시트 열기' 버튼이 여는 주소입니다.</p>
               </div>
             </div>
 
-            <!-- Student URL Section -->
+            <!-- 공통: 학생용 접속 주소 -->
             <div class="card" style="margin-bottom: 12px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #86efac;">
               <h3 style="font-size: 1rem; margin-bottom: 6px; color: #166534;">🔗 학생용 접속 주소</h3>
-              <p style="font-size: 0.78rem; color: #15803d; line-height: 1.5; margin-bottom: 10px;">이 주소를 학생들에게 공유하면, 학생이 링크로 들어올 때 우리 학급 데이터에 자동으로 연결되며, 학생 화면에는 선생님 메뉴가 보이지 않게 됩니다.</p>
+              <p style="font-size: 0.78rem; color: #15803d; line-height: 1.5; margin-bottom: 10px;">이 주소를 학생에게 공유하면 우리 학급 데이터에 자동으로 연결되고, 학생 화면에는 선생님 메뉴가 보이지 않습니다.</p>
               <div class="url-input-row">
-                <input id="student-url-display" type="text" readonly style="font-size: 0.68rem; background: #f8fafc; color: #334155; cursor: text;" placeholder="본부 URL을 먼저 저장해주세요.">
+                <input id="student-url-display" type="text" readonly style="font-size: 0.68rem; background: #fff; color: #334155; cursor: text;" placeholder="주소를 불러오는 중...">
                 <button onclick="copyStudentUrl()">복사</button>
               </div>
+              <button class="btn-link" onclick="openSpreadsheet()">📊 연결된 스프레드시트 열기</button>
             </div>
 
             <div class="reset-grid">
@@ -373,11 +1504,11 @@
       <div class="modal-content" onclick="event.stopPropagation()">
         <button class="modal-close" onclick="closeMissionPicker()">✕</button>
         <h3 id="picker-title" style="margin-bottom: 12px; color: var(--primary); text-align: center; font-size: 1.2rem;">실천하기</h3>
-        
+
         <div id="picker-tasks" style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px;">
           <!-- Task buttons will be injected here -->
         </div>
-        
+
         <div style="border-top: 1px dashed #cbd5e1; padding-top: 15px;">
           <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: var(--text-main);">✨ 나만의 약속 직접 만들기</p>
           <input type="text" id="custom-task-input" placeholder="나만의 미션을 입력하세요!" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; font-size: 0.95rem;" onkeypress="if(event.key==='Enter'){ addCustomTask(); }">
@@ -391,6 +1522,1325 @@
   <div id="toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 50px; font-size: 0.9rem; z-index: 10000; display: none; animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-  <script src="script.js"></script>
+  <script>
+/*
+  SDG's 리틀 히어로 - Logic V6 (Apps Script 단독 배포판)
+  ─ 데이터 통신은 google.script.run 으로 서버(code.gs) 함수를 직접 호출합니다.
+*/
+
+const APP_STATE = {
+  heroName: '',
+  selectedMissions: [], // [ { themeId, taskId, taskText } ]
+  startDate: '',
+  endDate: '',
+  myGoal: '',
+  progress: 0,
+  currentStep: 0,
+  history: [],
+  sheetConnected: false
+};
+
+const THEME_DETAILS = {
+  1: { title: "빈곤 퇴치", icon: "💰", color: "#e5243b", tasks: ["안 쓰는 물건 기부하기", "용돈 아껴 쓰기", "어려운 이웃에게 응원 편지 쓰기"] },
+  2: { title: "기아 종식", icon: "🍱", color: "#dda63a", tasks: ["음식 남기지 않고 다 먹기", "골고루 먹기", "우리 농산물 사랑하기"] },
+  3: { title: "건강과 웰빙", icon: "🏃", color: "#4c9f38", tasks: ["매일 30분 운동하기", "손 씻기 잘하기", "일찍 자고 일찍 일어나기"] },
+  4: { title: "양질의 교육", icon: "📚", color: "#c5192d", tasks: ["매일 책 한 권 읽기", "수업 시간에 집중하기", "친구와 지식 나누기"] },
+  5: { title: "성평등", icon: "⚖️", color: "#ff3a21", tasks: ["편견 없는 말 사용하기", "집안일 스스로 돕기", "친구의 개성 존중하기"] },
+  6: { title: "깨끗한 물과 위생", icon: "💧", color: "#26bde2", tasks: ["양치할 때 컵 사용하기", "물 아껴 쓰기", "샴푸 적게 쓰기"] },
+  7: { title: "모두를 위한 에너지", icon: "💡", color: "#fcc30b", tasks: ["안 쓰는 전등 끄기", "TV 시청 시간 줄이기", "계단 이용하기"] },
+  8: { title: "양질의 일자리", icon: "📈", color: "#a21942", tasks: ["꿈을 향해 노력하기", "정직한 생활 하기", "직업 체험 해보기"] },
+  9: { title: "산업·혁신·인프라", icon: "🏗️", color: "#fd6925", tasks: ["새로운 발명 아이디어 내기", "대중교통 이용하기", "인터넷 예절 지키기"] },
+  10: { title: "불평등 완화", icon: "🤝", color: "#dd1367", tasks: ["차별하는 말 하지 않기", "친구에게 먼저 다가가기", "도움 필요한 친구 돕기"] },
+  11: { title: "지속가능한 도시", icon: "🏘️", color: "#fd9d24", tasks: ["동네 쓰레기 줍기", "자전거 이용하기", "우리 동네 식물 가꾸기"] },
+  12: { title: "책임감 있는 소비", icon: "♻️", color: "#bf8b2e", tasks: ["분리배출 철저히 하기", "일회용품 사용 줄이기", "물건 아껴 쓰기"] },
+  13: { title: "기후 위기 대응", icon: "🌡️", color: "#3f7e44", tasks: ["기온 변화에 관심 갖기", "냉방/난방 줄이기", "환경 일기 쓰기"] },
+  14: { title: "해양생태계 보전", icon: "🌊", color: "#0a97d9", tasks: ["해변가 쓰레기 줍기", "미세 플라스틱 줄이기", "바다 동물 보호하기"] },
+  15: { title: "육상생태계 보전", icon: "🌳", color: "#56c02b", tasks: ["나무와 꽃 가꾸기", "숲속 생물 보호하기", "종이 아껴 쓰기"] },
+  16: { title: "평화·정의·제도", icon: "🕊️", color: "#00689d", tasks: ["친구와 싸우지 않기", "규칙 잘 지키기", "나쁜 말 사용하지 않기"] },
+  17: { title: "지구촌 협력", icon: "🌍", color: "#19486a", tasks: ["세계 친구들에게 관심 갖기", "환경 캠페인 참여하기", "함께 목표 실천하기"] }
+};
+
+// Ratings [themeId-taskIndex] = score (1-5)
+let DAILY_RATINGS = {};
+
+let STEPS = {};
+
+// ── 서버 통신 계층 (하이브리드) ──
+// ① 앱스스크립트 웹 앱으로 실행 → google.script.run 사용 (URL 붙여넣기 불필요)
+// ② 깃허브 등 정적 호스팅으로 실행 → 선생님이 저장한 웹 앱 URL 로 fetch 호출
+// 둘 다 아니고 URL 도 없으면 → 체험 모드(localStorage 전용)
+const HAS_GSR = !!(typeof google !== 'undefined' && google.script && google.script.run);
+let GAS_URL = '';            // 정적 호스팅 모드에서 쓰는 웹 앱 URL
+let CACHED_APP_URL = '';
+let CACHED_SHEET_URL = '';
+
+function isValidGasUrl(u) {
+  return !!u && u.indexOf('https://script.google.com/') === 0;
+}
+// 시트에 연결되어 있는가? (둘 중 하나라도 되면 연결로 본다)
+function isSheetConnected() {
+  return HAS_GSR || isValidGasUrl(GAS_URL);
+}
+
+// google.script.run 을 Promise 로 감싼 호출 (앱스스크립트 모드)
+function gsr(fn) {
+  const args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (resolve, reject) {
+    const r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+    r[fn].apply(r, args);
+  });
+}
+// 정적 호스팅 모드용 GET (JSON 파싱)
+function fetchGet(query) {
+  return fetch(GAS_URL + '?action=' + query).then(function (res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.text();
+  }).then(function (t) {
+    try { return JSON.parse(t); } catch (e) { throw new Error('서버 응답 형식 오류'); }
+  });
+}
+// 정적 호스팅 모드용 POST (no-cors: 전송만 하고 응답은 못 읽음)
+function fetchPost(bodyObj) {
+  return fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(bodyObj) });
+}
+
+// ── 논리 API (실행 모드와 무관하게 같은 형태의 결과를 돌려준다) ──
+function apiGetRoster() {
+  if (HAS_GSR) return gsr('getRoster');
+  return fetchGet('getRoster').then(function (d) { return (d && d.students) || []; });
+}
+function apiGetClassStats() {
+  if (HAS_GSR) return gsr('getClassStats');
+  return fetchGet('getClassStats').then(function (d) { return (d && d.stats) || null; });
+}
+function apiGetHistory(name) {
+  if (HAS_GSR) return gsr('getHistory', name);
+  return fetchGet('getHistory&name=' + encodeURIComponent(name)).then(function (d) { return (d && d.history) || []; });
+}
+function apiSaveRecord(payload) {
+  if (HAS_GSR) return gsr('saveRecord', payload);
+  return fetchPost(Object.assign({ action: 'saveRecord' }, payload));
+}
+function apiGenerateDashboard() {
+  if (HAS_GSR) return gsr('generateDashboard');
+  return fetchPost({ action: 'generateDashboard' });
+}
+function apiClearData() {
+  if (HAS_GSR) return gsr('clearData');
+  return fetchPost({ action: 'clearData' });
+}
+
+window.onload = () => {
+  try {
+    // Initialize STEPS inside onload to ensure elements exist
+    STEPS = {
+      0: document.getElementById('step-login'),
+      1: document.getElementById('step-sdg-intro'),
+      '1.5': document.getElementById('step-sdg-gallery'),
+      2: document.getElementById('step-summary'),
+      '2.5': document.getElementById('step-vision'),
+      3: document.getElementById('step-dashboard'),
+      4: document.getElementById('step-history'),
+      5: document.getElementById('step-success'),
+      6: document.getElementById('step-teacher')
+    };
+
+    // Check for saved state (but don't auto-redirect to Step 3, let them pick name)
+    const savedState = localStorage.getItem('sdg_hero_v6');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        Object.assign(APP_STATE, parsed);
+      } catch (e) {
+        localStorage.removeItem('sdg_hero_v6');
+      }
+    }
+
+    // 정적 호스팅(깃허브) 모드에서 쓸 웹 앱 URL 결정:
+    //  학생 링크(#c=) > 구형(?gas=) > 이 기기에 저장된 값
+    const hashGasUrl = new URLSearchParams(location.hash.replace(/^#/, '')).get('c');
+    const queryGasUrl = new URLSearchParams(location.search).get('gas');
+    const savedGasUrl = localStorage.getItem('sdg_gas_url');
+    GAS_URL = hashGasUrl || (queryGasUrl ? decodeURIComponent(queryGasUrl) : '') || savedGasUrl || '';
+
+    // 학생용 링크로 접속하면 선생님 메뉴 숨김 (#c= 또는 ?student=1)
+    const isStudentLink = !!hashGasUrl || !!queryGasUrl ||
+                          new URLSearchParams(location.search).get('student') === '1';
+    if (isStudentLink) {
+      const btn = document.getElementById('teacher-menu-btn');
+      if (btn) btn.style.display = 'none';
+    }
+
+    // Set default dates (오늘 ~ 6일 뒤 = 오늘 포함 총 7일)
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    if (document.getElementById('start-date')) document.getElementById('start-date').value = today;
+    if (document.getElementById('end-date')) document.getElementById('end-date').value = nextWeek;
+
+    // Start at Login
+    goToStep(0);
+    loadStudentList();
+    renderThemesSelection();
+    loadSidebarStats();
+    setInterval(loadSidebarStats, 120000); // refresh every 2 min
+  } catch (e) {
+    console.error("Initialization error:", e);
+    // If something crashes, try to at least show the login screen
+    if (typeof goToStep === 'function') goToStep(0);
+  }
+};
+
+let CURRENT_PICKER_THEME = null;
+
+function openMissionPicker(themeId) {
+  const modal = document.getElementById('mission-picker-modal');
+  const title = document.getElementById('picker-title');
+  const taskContainer = document.getElementById('picker-tasks');
+  const theme = THEME_DETAILS[themeId];
+
+  if (!theme) return;
+
+  CURRENT_PICKER_THEME = themeId;
+  modal.style.display = 'flex';
+
+  const count = APP_STATE.selectedMissions.length;
+  title.innerText = `${theme.icon} ${theme.title} (${count}/3)`;
+  title.style.color = theme.color;
+
+  // Inject task buttons
+  taskContainer.innerHTML = theme.tasks.map((task, idx) => {
+    const isSelected = APP_STATE.selectedMissions.some(m => m.taskText === task);
+    const bgStyle = isSelected ? 'background: #dcfce7; border-color: #22c55e;' : `background: white; border: 2px solid ${theme.color}44;`;
+    const textPrefix = isSelected ? '✅ ' : '';
+
+    return `
+      <button class="btn task-option-btn" style="${bgStyle} color: var(--text-main); text-align: left; padding: 12px 15px; font-size: 0.95rem; margin-bottom: 5px; width: 100%; box-shadow: 0 4px 0 ${isSelected ? '#22c55e22' : theme.color + '22'};" onclick="selectTask(${themeId}, '${task}')">
+        ${textPrefix}${idx + 1}. ${task}
+      </button>
+    `;
+  }).join('');
+
+  // Clear custom input
+  document.getElementById('custom-task-input').value = '';
+}
+
+function closeMissionPicker(event) {
+  // If event is provided, only close if clicking the backdrop
+  if (event && event.target !== document.getElementById('mission-picker-modal')) return;
+  document.getElementById('mission-picker-modal').style.display = 'none';
+}
+
+function selectTask(themeId, taskText) {
+  if (APP_STATE.selectedMissions.length >= 3) {
+    showToast("이미 3개의 미션을 모두 선택하셨습니다! 😊");
+    closeMissionPicker();
+    return;
+  }
+
+  const isAlreadySelected = APP_STATE.selectedMissions.some(m => m.taskText === taskText);
+  if (isAlreadySelected) {
+    showToast("이미 선택한 미션입니다! 😊");
+    closeMissionPicker();
+    return;
+  }
+
+  APP_STATE.selectedMissions.push({ themeId, taskText });
+  saveState();
+
+  const currentCount = APP_STATE.selectedMissions.length;
+  showToast(`미션이 추가되었습니다! (${currentCount}/3) ✨`);
+
+  const mainNextBtn = document.getElementById('btn-next-step');
+  if (mainNextBtn) mainNextBtn.style.display = 'block';
+
+  closeMissionPicker();
+  // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동 (기간 설정은 그 다음)
+  if (currentCount === 3) setTimeout(() => goToStep(2), 300);
+}
+
+function addCustomTask(themeId) {
+  let input, targetTheme;
+
+  // Case 1: Called from the Modal (no themeId passed)
+  if (themeId === undefined || themeId === null || typeof themeId === 'object') {
+    input = document.getElementById('custom-task-input');
+    targetTheme = CURRENT_PICKER_THEME;
+  }
+  // Case 2: Called from somewhere else with a themeId
+  else {
+    input = document.getElementById(`add-task-input-${themeId}`);
+    targetTheme = themeId;
+  }
+
+  const text = input ? input.value.trim() : '';
+  if (!text || !targetTheme) return;
+
+  if (APP_STATE.selectedMissions.length >= 3) {
+    showToast("이미 3개의 미션을 모두 선택하셨습니다! 😊");
+    closeMissionPicker();
+    return;
+  }
+
+  APP_STATE.selectedMissions.push({ themeId: targetTheme, taskText: text });
+  saveState();
+
+  const currentCount = APP_STATE.selectedMissions.length;
+  showToast(`나만의 미션이 추가되었습니다! (${currentCount}/3) ✨`);
+
+  const mainNextBtn = document.getElementById('btn-next-step');
+  if (mainNextBtn) mainNextBtn.style.display = 'block';
+
+  closeMissionPicker();
+
+  // 3개 선택 완료 → 선택 미션 확인 화면(step 2)으로 이동
+  if (currentCount === 3) {
+    setTimeout(() => goToStep(2), 300);
+  }
+
+  if (input) input.value = '';
+  if (themeId && typeof themeId !== 'object') renderThemesSelection();
+}
+
+function updateMissionSummary() {
+  const list = document.getElementById('summary-list');
+  const nextBtn = document.getElementById('btn-next-step');
+  const countSpan = document.getElementById('mission-count');
+
+  const count = APP_STATE.selectedMissions.length;
+  if (countSpan) countSpan.innerText = `${count} / 3`;
+
+  if (count === 0) {
+    list.innerHTML = '<li style="color: #94a3b8; text-align: center; padding: 20px;">아직 선택한 미션이 없습니다.<br>위의 아이콘을 눌러 미션을 골라보세요!</li>';
+    nextBtn.style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = APP_STATE.selectedMissions.map((m, idx) => `
+    <li style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
+      <div style="display: flex; flex-direction: column;">
+        <span style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px;">${THEME_DETAILS[m.themeId] ? THEME_DETAILS[m.themeId].icon + ' ' + THEME_DETAILS[m.themeId].title : '✨ 미션'}</span>
+        <span style="font-weight: 800; color: var(--text-main); font-size: 1rem;">${m.taskText}</span>
+      </div>
+      <button onclick="removeMission(${idx})" style="background: #fee2e2; border: none; color: #ef4444; font-size: 0.8rem; padding: 6px 12px; border-radius: 10px; cursor: pointer; font-weight: 800; transition: all 0.2s;">삭제</button>
+    </li>
+  `).join('');
+
+  nextBtn.style.display = 'block';
+  saveState();
+}
+
+function removeMission(index) {
+  APP_STATE.selectedMissions.splice(index, 1);
+  updateMissionSummary();
+}
+
+function resetMissionSelection() {
+  // 이미 저장된 활동 기록이 있으면 확인 후 진행
+  const hKey = 'sdg_history_' + APP_STATE.heroName;
+  const history = JSON.parse(localStorage.getItem(hKey) || '[]');
+  if (history.length > 0) {
+    if (!confirm('이미 활동 기록이 있습니다.\n미션을 다시 선택하면 기존 미션 구성이 변경됩니다.\n계속할까요?')) return;
+  }
+
+  // 선택 초기화
+  APP_STATE.selectedMissions = [];
+  saveState();
+
+  // 갤러리의 "선택한 미션 확인하기" 버튼 다시 숨김
+  const nextBtn = document.getElementById('btn-next-step');
+  if (nextBtn) nextBtn.style.display = 'none';
+
+  goToStep(1.5);
+}
+
+function handleLogin() {
+  const nameSelect = document.getElementById('hero-name');
+  const name = nameSelect.value;
+
+  if (!name) {
+    showToast("이름을 선택해주세요! 👋");
+    return;
+  }
+
+  // 시트 연결 시에만 이전 데이터 복원. 데모 모드는 항상 새로 시작.
+  const configKey = 'sdg_hero_config_' + name;
+  const savedConfig = isSheetConnected() ? localStorage.getItem(configKey) : null;
+
+  if (savedConfig) {
+    try {
+      const parsed = JSON.parse(savedConfig);
+      APP_STATE.selectedMissions = parsed.selectedMissions || [];
+      APP_STATE.startDate = parsed.startDate || '';
+      APP_STATE.endDate = parsed.endDate || '';
+      APP_STATE.myGoal = parsed.myGoal || '';
+      APP_STATE.progress = parsed.progress || 0;
+    } catch (e) {
+      console.error("Config parse error for", name, e);
+      APP_STATE.selectedMissions = [];
+      APP_STATE.startDate = '';
+      APP_STATE.endDate = '';
+      APP_STATE.myGoal = '';
+      APP_STATE.progress = 0;
+    }
+  } else {
+    APP_STATE.selectedMissions = [];
+    APP_STATE.startDate = '';
+    APP_STATE.endDate = '';
+    APP_STATE.myGoal = '';
+    APP_STATE.progress = 0;
+  }
+
+  APP_STATE.heroName = name;
+  saveState();
+
+  // Transition effect
+  const btn = document.querySelector('#step-login .btn');
+  const loader = document.getElementById('login-loader');
+  if (btn) btn.disabled = true;
+  if (loader) loader.style.display = 'block';
+
+  setTimeout(() => {
+    // Reset loader/button state
+    if (btn) btn.disabled = false;
+    if (loader) loader.style.display = 'none';
+
+    // Date Logic for Redirection
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let isChallengeActive = false;
+    if (APP_STATE.endDate && APP_STATE.selectedMissions.length > 0) {
+      const end = new Date(APP_STATE.endDate);
+      end.setHours(0, 0, 0, 0);
+      if (today <= end) isChallengeActive = true;
+    }
+
+    if (isChallengeActive) {
+      // 챌린지 진행 중 → 대시보드
+      goToStep(3);
+      showToast(`${name} 히어로, 어서오세요! 오늘의 성장을 기록해볼까요? ✨`);
+    } else if (APP_STATE.selectedMissions.length > 0) {
+      // 미션은 선택됐지만 기간 미설정 또는 만료 → 요약 화면에서 기간 재설정
+      goToStep(2);
+      showToast(`${name} 히어로, 챌린지 기간을 확인하고 시작해보세요! 📅`);
+    } else {
+      // 미션 미선택 → 처음부터 시작
+      goToStep(1);
+    }
+  }, 800);
+}
+
+function renderDefaultStudents(select) {
+  const options = Array.from({ length: 30 }, (_, i) =>
+    `<option value="학생${i + 1}">학생${i + 1}</option>`
+  ).join('');
+  select.innerHTML = '<option value="">이름을 선택해주세요.</option>' + options;
+  select.value = '';
+}
+
+async function loadStudentList() {
+  const select = document.getElementById('hero-name');
+  if (!select) return;
+
+  if (!isSheetConnected()) {
+    APP_STATE.sheetConnected = false;
+    renderDefaultStudents(select);
+    return;
+  }
+
+  try {
+    select.innerHTML = '<option value="">명단 불러오는 중... 📡</option>';
+
+    // 서버 code.gs 의 명단 조회 → [{id, name, team}] 배열
+    const students = await apiGetRoster();
+    const rawList = students || [];
+    // id(번호)가 있으면 "번호. 이름", 없으면 이름만 표시
+    const list = rawList.map(s => {
+      if (typeof s === 'string') return { label: s, value: s };
+      const label = s.id ? `${s.id}. ${s.name}` : s.name;
+      return { label, value: label };
+    });
+
+    if (list.length > 0) {
+      APP_STATE.sheetConnected = true;
+      select.innerHTML = '<option value="">이름을 선택해주세요.</option>' +
+        list.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+      select.value = APP_STATE.heroName || '';
+    } else {
+      APP_STATE.sheetConnected = true;
+      select.innerHTML = '<option value="">학생 명단이 비어 있습니다.</option>';
+    }
+  } catch (err) {
+    console.error("Student load error:", err);
+    APP_STATE.sheetConnected = false;
+    renderDefaultStudents(select);
+    showToast('명단 불러오기 실패 — 기본 명단(학생1~30)으로 표시합니다.');
+  }
+}
+
+function goToStep(step) {
+  if (step === 6) {
+    const pw = prompt("선생님 암호를 입력하세요");
+    if (pw !== '1234') {
+      if (pw !== null) alert("암호가 틀렸습니다.");
+      return;
+    }
+  }
+
+  // Hide all
+  Object.values(STEPS).forEach(el => { if (el) el.style.display = 'none'; });
+
+  if (STEPS[step]) {
+    // Preserve flex for landing screens
+    if (step === 0) {
+      STEPS[step].style.display = 'flex';
+    } else {
+      STEPS[step].style.display = 'block';
+    }
+  }
+
+  if (step === '1.5' || step === 1.5) {
+    const nextBtn = document.getElementById('btn-next-step');
+    if (nextBtn) nextBtn.style.display = APP_STATE.selectedMissions.length > 0 ? 'block' : 'none';
+  }
+  if (step === 2) {
+    const goalArea = document.getElementById('my-goal');
+    if (goalArea) goalArea.value = APP_STATE.myGoal || '';
+
+    const chipsContainer = document.getElementById('selection-chips');
+    if (chipsContainer) {
+      chipsContainer.innerHTML = APP_STATE.selectedMissions.map(m => {
+        const t = THEME_DETAILS[m.themeId];
+        return `
+          <div style="background:white; border:1px solid ${t.color}66; padding:15px; border-radius:15px; width:100%; display:flex; align-items:center; gap:12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 5px;">
+            <div style="background:${t.color}15; padding:10px; border-radius:12px; font-size:1.5rem;">${t.icon}</div>
+            <div style="flex:1; min-width:0;">
+              <span style="font-size:0.75rem; color:var(--text-muted); display:block; font-weight:700; margin-bottom:4px;">${t.title}</span>
+              <span style="font-size:1rem; font-weight:800; color:var(--text-main); line-height:1.2; word-break: keep-all;">${m.taskText}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+  if (step === 2.5) {
+    // Sync current values if any
+    if (APP_STATE.startDate) document.getElementById('start-date').value = APP_STATE.startDate;
+    if (APP_STATE.endDate) document.getElementById('end-date').value = APP_STATE.endDate;
+    updateDurationDisplay();
+  }
+  if (step === 3) {
+    updateDashboard();
+  }
+  if (step === 6) {
+    switchTeacherTab('stats');
+  }
+
+  if (STEPS[step]) STEPS[step].style.display = 'block';
+  APP_STATE.currentStep = step;
+  saveState();
+}
+
+function switchTeacherTab(tabName) {
+  document.querySelectorAll('.teacher-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.teacher-tab-content').forEach(c => {
+    c.style.display = (c.id === 'teacher-tab-' + tabName) ? 'block' : 'none';
+  });
+  if (tabName === 'stats') loadTeacherStats();
+  if (tabName === 'settings') populateSettingsInputs();
+}
+
+function populateSettingsInputs() {
+  const studentUrlDisplay = document.getElementById('student-url-display');
+  const connectedCard = document.getElementById('settings-connected-card');
+  const urlCard = document.getElementById('settings-url-card');
+  const gasInput = document.getElementById('gas-url-input');
+  const currentEl = document.getElementById('gas-url-current');
+
+  if (HAS_GSR) {
+    // 앱스스크립트 모드: URL 입력 불필요. 연결됨 안내 + 서버에서 URL 캐시
+    if (connectedCard) connectedCard.style.display = 'block';
+    if (urlCard) urlCard.style.display = 'none';
+    gsr('getAppUrl').then(function (u) {
+      CACHED_APP_URL = u || '';
+      if (studentUrlDisplay) studentUrlDisplay.value = getStudentUrl();
+    }).catch(function () {
+      if (studentUrlDisplay) studentUrlDisplay.value = getStudentUrl();
+    });
+    gsr('getSpreadsheetUrl').then(function (u) { CACHED_SHEET_URL = u || ''; }).catch(function () {});
+  } else {
+    // 정적 호스팅 모드: 웹 앱 URL 입력칸 표시
+    if (connectedCard) connectedCard.style.display = 'none';
+    if (urlCard) urlCard.style.display = 'block';
+    if (gasInput) gasInput.value = GAS_URL || '';
+    if (currentEl) currentEl.innerText = GAS_URL || '(아직 없음)';
+    if (studentUrlDisplay) studentUrlDisplay.value = isValidGasUrl(GAS_URL) ? getStudentUrl() : '';
+  }
+}
+
+// 실행 모드에 맞는 학생용 접속 주소
+function getStudentUrl() {
+  if (HAS_GSR) {
+    // 앱스스크립트: 같은 웹 앱 URL + ?student=1
+    const base = CACHED_APP_URL || window.location.href.split('#')[0].split('?')[0];
+    return base + '?student=1';
+  }
+  // 정적 호스팅: 현재 페이지 + #c=<웹앱URL> (학생이 열면 자동 연결)
+  const base = window.location.origin + window.location.pathname;
+  return base + '#c=' + encodeURIComponent(GAS_URL);
+}
+
+function copyStudentUrl() {
+  if (!HAS_GSR && !isValidGasUrl(GAS_URL)) {
+    showToast('먼저 위에서 웹 앱 URL을 저장해주세요.');
+    return;
+  }
+  const url = getStudentUrl();
+  navigator.clipboard.writeText(url).then(
+    () => showToast('학생용 주소가 복사되었습니다! 📋'),
+    () => showToast('복사 실패 — 아래 칸에서 직접 복사해주세요.')
+  );
+}
+
+// 정적 호스팅 모드에서 선생님이 웹 앱 URL 을 저장
+function saveGasUrl() {
+  const input = document.getElementById('gas-url-input');
+  const url = input.value.trim();
+  if (!url) { alert('URL을 입력해주세요.'); return; }
+  if (!url.startsWith('https://script.google.com/')) {
+    alert('올바른 Apps Script URL이 아닙니다.\nhttps://script.google.com/ 으로 시작해야 해요.');
+    return;
+  }
+  if (!url.endsWith('/exec')) {
+    if (!confirm('이 URL은 일반적인 웹 앱 형식(/exec 로 끝남)이 아닙니다.\n그래도 저장할까요?')) return;
+  }
+  localStorage.setItem('sdg_gas_url', url);
+  GAS_URL = url;
+  populateSettingsInputs();
+  const studentUrlDisplay = document.getElementById('student-url-display');
+  if (studentUrlDisplay) studentUrlDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast('✅ 웹 앱 URL이 저장되었습니다! 아래 학생용 주소를 복사해 공유하세요.');
+  loadStudentList();
+  loadSidebarStats();
+}
+
+function openSpreadsheet() {
+  if (CACHED_SHEET_URL) { window.open(CACHED_SHEET_URL, '_blank'); return; }
+  if (!HAS_GSR) { alert('스프레드시트는 앱스스크립트로 실행할 때만 바로 열 수 있어요.\n구글 드라이브에서 직접 열어주세요.'); return; }
+  gsr('getSpreadsheetUrl').then(function (u) {
+    if (u) { CACHED_SHEET_URL = u; window.open(u, '_blank'); }
+    else alert('스프레드시트 주소를 가져오지 못했습니다.');
+  }).catch(function () {
+    alert('스프레드시트 주소를 가져오지 못했습니다.');
+  });
+}
+
+async function loadSidebarStats() {
+  if (!isSheetConnected()) {
+    const msgEl = document.getElementById('sb-msg');
+    if (msgEl) msgEl.innerText = '체험 모드 — 시트 연결 시 반 현황이 표시됩니다 📋';
+    ['sb-students','sb-records','sb-tasks','sb-avg'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerText = '-';
+    });
+    return;
+  }
+  try {
+    const s = await apiGetClassStats();
+    if (!s) return;
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+    setText('sb-students', s.totalStudents);
+    setText('sb-records', s.totalRecords);
+    setText('sb-tasks', s.totalTasks);
+    setText('sb-avg', s.avgProgress + '%');
+    let msg;
+    if (s.totalRecords >= 30) msg = '🌟 우리 반은 진짜 히어로!';
+    else if (s.totalRecords >= 10) msg = '🌱 멋진 실천이 쌓이고 있어요!';
+    else if (s.totalRecords > 0) msg = '✨ 시작이 반! 함께 해요!';
+    else msg = '함께 만드는 멋진 변화 🌱';
+    setText('sb-msg', msg);
+  } catch (err) { /* silent */ }
+}
+
+async function loadTeacherStats() {
+  const loadingEl = document.getElementById('class-stats-loading');
+  const contentEl = document.getElementById('class-stats-content');
+  if (!loadingEl || !contentEl) return;
+
+  loadingEl.style.display = 'block';
+  loadingEl.innerHTML = '📡 데이터를 불러오는 중...';
+  contentEl.style.display = 'none';
+
+  if (!isSheetConnected()) {
+    loadingEl.innerHTML = HAS_GSR
+      ? '⚠️ 시트에 연결되어 있지 않습니다.'
+      : '⚠️ 아직 시트에 연결되지 않았어요.<br><b>⚙️ 설정</b> 탭에서 웹 앱 URL을 저장하면 통계가 표시됩니다.';
+    return;
+  }
+
+  try {
+    const stats = await apiGetClassStats();
+    if (!stats || stats.totalRecords === 0) {
+      loadingEl.innerHTML = '아직 우리 반의 기록이 없어요. 친구들이 실천을 시작하면 통계가 나타납니다! ✨';
+      return;
+    }
+    renderClassStats(stats);
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+  } catch (err) {
+    console.error('Class stats error:', err);
+    loadingEl.innerHTML = '❌ 데이터를 불러올 수 없습니다.<br><span style="font-size:0.65rem; color:#94a3b8; word-break:break-all; display:block; margin-top:6px;">오류: ' + (err.message || err) + '</span>';
+  }
+}
+
+function renderClassStats(stats) {
+  document.getElementById('class-total-students').innerText = stats.totalStudents;
+  document.getElementById('class-total-records').innerText = stats.totalRecords;
+  document.getElementById('class-total-tasks').innerText = stats.totalTasks;
+  document.getElementById('class-avg-progress').innerText = stats.avgProgress + '%';
+  renderDailyChart(stats.dailyStats || []);
+}
+
+function renderDailyChart(dailyStats) {
+  const chartEl = document.getElementById('daily-chart');
+  const emptyEl = document.getElementById('daily-chart-empty');
+  if (!chartEl) return;
+
+  const recent = dailyStats.slice(-10);
+  if (recent.length === 0) {
+    chartEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  chartEl.style.display = 'block';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const w = Math.max(260, chartEl.clientWidth || 280);
+  const h = 120;
+  const padL = 26, padR = 6, padT = 8, padB = 22;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const COLOR = '#6ee7b7';
+
+  // Y-axis is fixed 0~100% (avg progress) regardless of data range
+  const yMax = 100;
+  const yTicks = 4;
+
+  // Use avgProgress if present (new GAS), fall back to deriving from totalTasks if needed
+  const hasAvg = recent.some(d => typeof d.avgProgress === 'number');
+  if (!hasAvg) {
+    console.warn('[chart] avgProgress 필드 없음 — GAS 재배포가 필요합니다.');
+  }
+  const points = recent.map((d, i) => {
+    const val = (typeof d.avgProgress === 'number') ? d.avgProgress : 0;
+    const x = padL + (recent.length === 1 ? innerW / 2 : (i * innerW / (recent.length - 1)));
+    const y = padT + innerH - (val / yMax) * innerH;
+    return { x: x, y: y, val: val, label: d.label };
+  });
+
+  // If only 1 point, draw a short horizontal line so it's visible
+  if (points.length === 1) {
+    const p = points[0];
+    points.unshift({ x: padL + 8, y: p.y, val: p.val, label: '' });
+    points.push({ x: padL + innerW - 8, y: p.y, val: p.val, label: '' });
+  }
+
+  const pathD = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ');
+  const areaD = points.length > 1
+    ? pathD + ` L ${points[points.length - 1].x} ${padT + innerH} L ${points[0].x} ${padT + innerH} Z`
+    : '';
+
+  let yAxisSvg = '';
+  for (let i = 0; i <= yTicks; i++) {
+    const val = Math.round(yMax * (yTicks - i) / yTicks);
+    const y = padT + (i * innerH / yTicks);
+    yAxisSvg += `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="#f1f5f9" stroke-width="0.4"/>`;
+    yAxisSvg += `<text x="${padL - 3}" y="${y + 2}" text-anchor="end" font-size="7" fill="#94a3b8" font-weight="400">${val}%</text>`;
+  }
+
+  const showEvery = recent.length > 6 ? 2 : 1;
+  const pointsSvg = points.map((p, i) => {
+    const showLabel = i % showEvery === 0 || i === points.length - 1;
+    return `
+      <circle cx="${p.x}" cy="${p.y}" r="2" fill="white" stroke="${COLOR}" stroke-width="1"/>
+      ${showLabel ? `<text x="${p.x}" y="${p.y - 5}" text-anchor="middle" font-size="7" font-weight="500" fill="#64748b">${p.val}%</text>` : ''}
+    `;
+  }).join('');
+
+  const xLabelsSvg = points.map((p, i) => {
+    const showLabel = i % showEvery === 0 || i === points.length - 1;
+    if (!showLabel) return '';
+    return `
+      <text x="${p.x}" y="${padT + innerH + 10}" text-anchor="middle" font-size="7.5" fill="#94a3b8" font-weight="500">${p.label}</text>
+    `;
+  }).join('');
+
+  chartEl.innerHTML = `
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block; overflow:visible;">
+      ${yAxisSvg}
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + innerH}" stroke="#e2e8f0" stroke-width="0.6"/>
+      <line x1="${padL}" y1="${padT + innerH}" x2="${w - padR}" y2="${padT + innerH}" stroke="#e2e8f0" stroke-width="0.6"/>
+      ${areaD ? `<path d="${areaD}" fill="${COLOR}" fill-opacity="0.12"/>` : ''}
+      ${points.length > 1 ? `<path d="${pathD}" fill="none" stroke="${COLOR}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+      ${pointsSvg}
+      ${xLabelsSvg}
+    </svg>
+  `;
+}
+
+function confirmMissions() {
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
+  const myGoal = document.getElementById('my-goal').value;
+
+  if (!startDate || !endDate) {
+    alert("챌린지 시작일과 종료일을 설정해주세요! 📅");
+    return;
+  }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (end < start) {
+    alert("종료일은 시작일보다 빠를 수 없어요! 😅");
+    return;
+  }
+
+  APP_STATE.startDate = startDate;
+  APP_STATE.endDate = endDate;
+  APP_STATE.myGoal = myGoal;
+
+  saveState();
+  goToStep(3);
+  showToast("미션 본부에 챌린지 계획이 전송되었습니다! 🚀");
+}
+
+function renderThemesSelection() {
+  const container = document.getElementById('themes-list');
+  if (!container) return;
+  container.innerHTML = Object.entries(THEME_DETAILS).map(([id, detail]) => `
+    <div class="theme-card" style="border-left:8px solid ${detail.color};">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span style="font-size:1.3rem;">${detail.icon} <b>${detail.title}</b></span>
+      </div>
+      <div class="task-selection-list">
+        ${detail.tasks.map((task, idx) => {
+    const isSelected = APP_STATE.selectedMissions.some(m => m.themeId === id && m.taskId === 'p' + idx);
+    return `
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; margin-bottom:8px; cursor:pointer;">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleTask('${id}', 'p${idx}', '${task}', this.checked)" style="width:18px; height:18px;">
+              <span>${task}</span>
+            </label>
+          `;
+  }).join('')}
+        <div id="custom-tasks-${id}" style="margin-top:10px;">
+          ${APP_STATE.selectedMissions.filter(m => m.themeId === id && m.taskId && m.taskId.startsWith('c')).map(m => `
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; margin-bottom:8px; cursor:pointer; color:${detail.color}; font-weight:700;">
+              <input type="checkbox" checked onchange="toggleTask('${id}', '${m.taskId}', '${m.taskText}', false)" style="width:18px; height:18px;">
+              <span>(나만의 실천) ${m.taskText}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      <div class="custom-task-box">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="add-task-input-${id}" placeholder="직접 쓰고 싶은 실천 내용이 있나요?" style="padding:10px; font-size:0.85rem; border-radius:10px; flex:1;">
+          <button onclick="addCustomTask('${id}')" style="background:${detail.color}; color:white; border:none; padding:10px 15px; border-radius:10px; cursor:pointer; font-weight:bold; white-space:nowrap;">추가</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleTask(themeId, taskId, taskText, isChecked) {
+  if (isChecked) {
+    if (APP_STATE.selectedMissions.length >= 3) {
+      renderThemesSelection();
+      return;
+    }
+    const alreadyInTheme = APP_STATE.selectedMissions.some(m => m.themeId === themeId && m.taskId === taskId);
+    if (alreadyInTheme) {
+      renderThemesSelection();
+      return;
+    }
+    APP_STATE.selectedMissions.push({ themeId, taskId, taskText });
+  } else {
+    APP_STATE.selectedMissions = APP_STATE.selectedMissions.filter(m => !(m.themeId === themeId && m.taskId === taskId));
+  }
+  saveState();
+  renderThemesSelection();
+}
+
+
+
+function updateDashboard() {
+  document.getElementById('display-name').innerText = APP_STATE.heroName + " 히어로";
+
+  // Format period
+  if (APP_STATE.startDate && APP_STATE.endDate) {
+    const s = APP_STATE.startDate.replace(/-/g, '.');
+    const e = APP_STATE.endDate.replace(/-/g, '.');
+    const periodElem = document.getElementById('display-period');
+    if (periodElem) periodElem.innerText = `${s} ~ ${e}`;
+  }
+
+  // Calculate Days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(APP_STATE.startDate);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(APP_STATE.endDate);
+  end.setHours(0, 0, 0, 0);
+
+  const totalTime = end.getTime() - start.getTime();
+  const totalDays = Math.ceil(totalTime / (1000 * 60 * 60 * 24)) + 1;
+
+  const elapsedTime = today.getTime() - start.getTime();
+  const currentDay = Math.ceil(elapsedTime / (1000 * 60 * 60 * 24)) + 1;
+
+  const dayLabel = document.getElementById('current-day-label');
+  if (dayLabel) {
+    if (currentDay < 1) {
+      dayLabel.innerText = "챌린지 준비 중";
+    } else if (currentDay > totalDays) {
+      dayLabel.innerText = "챌린지 완료! 🏆";
+    } else {
+      dayLabel.innerText = `Day ${currentDay} / ${totalDays}`;
+    }
+  }
+
+  const container = document.getElementById('active-missions');
+  if (!container) return;
+  container.classList.add('active-missions-area');
+
+  container.innerHTML = APP_STATE.selectedMissions.map((mission, idx) => {
+    const detail = THEME_DETAILS[mission.themeId];
+    return `
+      <div class="mission-mini-card" style="border-left: 6px solid ${detail.color};">
+        <div style="flex: 1; min-width: 0;">
+          <span style="font-size:0.65rem; color:var(--text-muted); display: block;">${detail.icon} ${detail.title}</span>
+          <p style="font-weight:800; font-size:0.95rem; color:var(--text-main); line-height:1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mission.taskText}</p>
+        </div>
+        <div class="heart-rating-mini" data-midx="${idx}">
+          <span onclick="rateTask(${idx}, 1)">❤</span>
+          <span onclick="rateTask(${idx}, 2)">❤</span>
+          <span onclick="rateTask(${idx}, 3)">❤</span>
+          <span onclick="rateTask(${idx}, 4)">❤</span>
+          <span onclick="rateTask(${idx}, 5)">❤</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function rateTask(mIdx, rating) {
+  const container = document.querySelector(`.heart-rating-mini[data-midx="${mIdx}"]`);
+  const hearts = container.querySelectorAll('span');
+  hearts.forEach((h, i) => {
+    h.style.color = (i < rating) ? '#ef4444' : '#e2e8f0';
+    h.style.transform = (i < rating) ? 'scale(1.2)' : 'scale(1)';
+  });
+  DAILY_RATINGS[mIdx] = rating;
+  updateProgress();
+  debounceAutoSave();
+}
+
+function updateProgress() {
+  const allRatings = Object.values(DAILY_RATINGS);
+  if (allRatings.length === 0) return;
+  const totalPotential = (document.querySelectorAll('.heart-rating-mini').length) * 5;
+  const totalScore = allRatings.reduce((a, b) => a + b, 0);
+  const percentage = Math.round((totalScore / totalPotential) * 100);
+  APP_STATE.progress = percentage;
+  document.getElementById('total-progress').style.width = percentage + '%';
+  document.getElementById('progress-text').innerText = percentage + '%';
+}
+
+let saveTimeout;
+function debounceAutoSave() {
+  clearTimeout(saveTimeout);
+  const status = document.getElementById('save-status');
+  if (isSheetConnected()) {
+    status.innerText = '✍️ 기록을 정리 중이에요...';
+  } else {
+    status.innerText = '✍️ 기기에 저장 중...';
+  }
+  saveTimeout = setTimeout(autoSave, 2000);
+}
+
+async function autoSave() {
+  updateProgress();
+  const status = document.getElementById('save-status');
+  const connected = isSheetConnected();
+
+  if (connected) {
+    status.innerHTML = '☁️ <span style="animation: pulse 1s infinite;">기록을 본부로 보내는 중...</span>';
+  } else {
+    status.innerHTML = '💾 기기에 저장하는 중...';
+  }
+
+  const logDataTasks = APP_STATE.selectedMissions.map((m, idx) => {
+    const rating = DAILY_RATINGS[idx] || 0;
+    const detail = THEME_DETAILS[m.themeId];
+    return {
+      theme: detail.title, icon: detail.icon, task: m.taskText, score: rating
+    };
+  });
+
+  // Format as a single string for Spreadsheet display (e.g., "기후 위기 대응, 안 쓰는 전기 끄기, 2")
+  const tasksDisplayString = logDataTasks.map(t => `${t.theme}, ${t.task}, ${t.score}`).join('\n');
+
+  const reflection = document.getElementById('daily-reflection').value.trim();
+
+  const logData = {
+    heroName: APP_STATE.heroName, progress: APP_STATE.progress,
+    tasks: logDataTasks, reflection: reflection, myGoal: APP_STATE.myGoal,
+    timestamp: new Date().toLocaleString('ko-KR')
+  };
+
+  try {
+    // 시트가 연동된 경우에만 서버로 전송
+    if (connected) {
+      const payload = {
+        heroName: APP_STATE.heroName,
+        progress: APP_STATE.progress,
+        tasks: tasksDisplayString,
+        reflection: reflection,
+        myGoal: APP_STATE.myGoal,
+        startDate: APP_STATE.startDate,
+        endDate: APP_STATE.endDate
+      };
+      await apiSaveRecord(payload);
+    }
+    // localStorage에는 항상 저장
+    const hKey = 'sdg_history_' + APP_STATE.heroName;
+    const currentHist = JSON.parse(localStorage.getItem(hKey) || '[]');
+    const todayKey = new Date().toLocaleDateString('ko-KR');
+    const latest = currentHist[0];
+    const latestDateKey = latest && latest.timestamp ? latest.timestamp.startsWith(todayKey) : false;
+    if (latest && latestDateKey) {
+      currentHist[0] = logData;
+    } else {
+      currentHist.unshift(logData);
+      if (currentHist.length > 50) currentHist.pop();
+    }
+    localStorage.setItem(hKey, JSON.stringify(currentHist));
+
+    if (connected) {
+      status.innerText = '✅ 본부에 전송되었습니다!';
+      setTimeout(loadSidebarStats, 3000);
+    } else {
+      status.innerText = '💾 기기에 저장됨 (시트 미연동)';
+    }
+    setTimeout(() => { status.innerText = ''; }, 3000);
+  } catch (err) {
+    status.innerText = connected ? '❌ 연결 실패' : '💾 기기에 저장됨 (시트 미연동)';
+  }
+}
+
+function resetChallenge() {
+  if (confirm("주제나 날짜를 처음부터 다시 정할까요?")) {
+    localStorage.removeItem('sdg_hero_v6');
+    location.reload();
+  }
+}
+function saveState() {
+  localStorage.setItem('sdg_hero_v6', JSON.stringify(APP_STATE));
+  // 시트 연결 시에만 설정 저장 — 데모 모드는 저장하지 않아 다음 로그인 시 이전 데이터가 보이지 않게
+  if (APP_STATE.heroName && isSheetConnected()) {
+    localStorage.setItem('sdg_hero_config_' + APP_STATE.heroName, JSON.stringify(APP_STATE));
+  }
+}
+function resetView() { location.reload(); }
+async function toggleHistory() {
+  // Flush any pending debounced save so the latest reflection is captured
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+    const reflection = document.getElementById('daily-reflection');
+    const hasRatings = Object.keys(DAILY_RATINGS).length > 0;
+    const hasReflection = reflection && reflection.value.trim().length > 0;
+    if (hasRatings || hasReflection) {
+      await autoSave();
+    }
+  }
+  goToStep(4);
+
+  const container = document.getElementById('history-container');
+  if (container) container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">📡 본부(구글 시트)에서 기록을 불러오는 중...</div>';
+
+  await fetchAndRenderHistory();
+}
+
+async function fetchAndRenderHistory() {
+  const hKey = 'sdg_history_' + APP_STATE.heroName;
+  let history = JSON.parse(localStorage.getItem(hKey) || '[]');
+
+  if (isSheetConnected() && APP_STATE.heroName) {
+    try {
+      const data = await apiGetHistory(APP_STATE.heroName);
+      if (Array.isArray(data)) {
+        history = data.map(item => {
+          let parsedTasks = [];
+          if (typeof item.tasks === 'string' && item.tasks.trim()) {
+             parsedTasks = item.tasks.split('\n').map(line => {
+                const parts = line.split(',');
+                return {
+                   theme: (parts[0] || '').trim(),
+                   task: (parts[1] || '').trim(),
+                   score: Number(parts[2] || 0),
+                   icon: '🌱'
+                };
+             });
+          } else if (Array.isArray(item.tasks)) {
+             parsedTasks = item.tasks;
+          }
+          return { ...item, tasks: parsedTasks };
+        });
+        localStorage.setItem(hKey, JSON.stringify(history));
+      }
+    } catch (e) {
+      console.warn("History fetch failed, using local", e);
+      alert('⚠️ 구글 시트 본부와 연결할 수 없습니다.\n\n원인: ' + (e.message || e) + '\n\n잠시 후 다시 시도하거나, 앱을 웹 앱 URL로 열었는지 확인해주세요.');
+    }
+  }
+  renderHistoryUI(history);
+}
+
+function renderHistoryUI(history) {
+  const container = document.getElementById('history-container');
+
+  const connected = isSheetConnected();
+
+  // 다짐 박스
+  const goalElem = document.getElementById('history-display-goal');
+  const visionBox = document.getElementById('history-vision-box');
+  if (APP_STATE.myGoal) {
+    if (goalElem) goalElem.innerText = APP_STATE.myGoal;
+    if (visionBox) visionBox.style.display = 'flex';
+  } else {
+    if (visionBox) visionBox.style.display = 'none';
+  }
+
+  // 기록이 하나도 없을 때 (연동/체험 공통)
+  if (!history || history.length === 0) {
+    if (container) container.innerHTML = `
+      <div style="text-align:center; padding:40px; color:var(--text-muted);">
+        <div style="font-size:2rem; margin-bottom:12px;">📋</div>
+        <p style="font-weight:800; margin-bottom:8px;">아직 기록이 없어요!</p>
+        <p style="font-size:0.85rem;">${connected
+          ? '오늘의 행동을 먼저 기록해보세요!'
+          : '오늘의 행동을 기록하면<br>이 기기에 발자취가 차곡차곡 쌓입니다.'}</p>
+      </div>`;
+    const chartContainer = document.getElementById('history-chart-container');
+    if (chartContainer) chartContainer.innerHTML = '';
+    if (visionBox) visionBox.style.display = 'none';
+    return;
+  }
+
+  // 체험 모드면 "이 기기에만 저장된 기록"임을 안내하는 배너를 위에 붙인다.
+  const demoBanner = connected ? '' : `
+    <div style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; font-size:0.75rem; font-weight:700; padding:10px 14px; border-radius:12px; margin-bottom:14px; line-height:1.5; text-align:center;">
+      💡 체험 모드예요. 아래 발자취는 <b>이 기기에만</b> 저장된 기록입니다.<br>다른 기기·브라우저에서는 보이지 않아요.
+    </div>`;
+
+  container.innerHTML = demoBanner + history.map(item => {
+    const tasks = Array.isArray(item.tasks) ? item.tasks : [];
+    return `
+    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+      <div style="background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.8rem; color: #64748b; font-weight: 800;">🕒 ${item.timestamp}</span>
+        <span style="background: var(--primary); color: white; padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">성장 ${item.progress}%</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+        <thead>
+          <tr style="background: #fff; border-bottom: 1px solid #f1f5f9;">
+            <th style="padding: 12px; text-align: center; color: #94a3b8; font-size: 0.75rem; width: 35%;">주제</th>
+            <th style="padding: 12px; text-align: left; color: #94a3b8; font-size: 0.75rem;">실천 내용</th>
+            <th style="padding: 12px; text-align: center; color: #94a3b8; font-size: 0.75rem; width: 20%;">점수</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tasks.map(t => `
+            <tr style="border-bottom: 1px solid #f8fafc;">
+              <td style="padding: 12px; font-weight: 700; color: var(--primary); font-size: 0.8rem; text-align: center; word-break: keep-all; line-height: 1.3;">${t.icon} ${t.theme}</td>
+              <td style="padding: 12px; color: var(--text-main); font-weight: 700; line-height: 1.3;">${t.task}</td>
+              <td style="padding: 12px; text-align: center; font-size: 0.9rem; font-weight: 800; color: #ef4444;">${t.score}점</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        ${item.reflection ? `
+          <tfoot>
+            <tr>
+              <td colspan="3" style="padding: 15px 20px; background: #fffbeb; color: #92400e; font-size: 0.85rem; border-top: 1px solid #fef3c7;">
+                <div style="display: flex; gap: 10px; align-items: baseline;">
+                  <span style="font-weight: 900; color: #b45309; font-size: 0.75rem; white-space: nowrap;">💬 히어로 한 마디:</span>
+                  <span style="font-weight: 500; color: #78350f; line-height: 1.5;">${item.reflection}</span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        ` : ''}
+      </table>
+    </div>
+  `;
+  }).join('');
+
+  renderHistoryChart(history);
+}
+
+function renderHistoryChart(history) {
+  const chartContainer = document.getElementById('history-chart-container');
+  if (!chartContainer) return;
+
+  const recent = [...history].reverse().slice(-7);
+  if (recent.length === 0) return;
+
+  const w = chartContainer.clientWidth || 300;
+  const h = 250;
+  const padding = 35;
+
+  // Points calculation
+  const points = recent.map((item, idx) => {
+    const x = padding + (idx * ((w - padding * 2) / Math.max(1, recent.length - 1)));
+    const y = h - padding - (item.progress * ((h - padding * 2) / 100));
+
+    // Parse date from timestamp (format is usually "2026. 4. 26. 오후 9:13:21")
+    let dateStr = "";
+    try {
+      const match = item.timestamp.match(/(\d+)\.\s*(\d+)\.\s*(\d+)/);
+      if (match) dateStr = `${match[2]}/${match[3]}`;
+      else dateStr = item.timestamp.split('.')[1].trim() + '/' + item.timestamp.split('.')[2].trim();
+    } catch (e) { dateStr = (idx + 1).toString(); }
+
+    return { x, y, val: item.progress, date: dateStr };
+  });
+
+  const pathD = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ');
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${h - padding} L ${points[0].x} ${h - padding} Z`;
+
+  chartContainer.innerHTML = `
+    <svg width="100%" height="${h}" style="overflow: visible;">
+      <defs>
+        <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:var(--primary);stop-opacity:0.2" />
+          <stop offset="100%" style="stop-color:var(--primary);stop-opacity:0" />
+        </linearGradient>
+      </defs>
+
+      <!-- Grid lines & Y-Axis Labels -->
+      ${[0, 25, 50, 75, 100].map(val => {
+    const y = h - padding - (val * ((h - padding * 2) / 100));
+    return `
+          <line x1="${padding}" y1="${y}" x2="${w - padding}" y2="${y}" stroke="#e2e8f0" stroke-width="1.2" stroke-dasharray="4" />
+          <text x="${padding - 10}" y="${y + 4}" text-anchor="end" font-size="9" fill="#64748b" font-weight="900">${val}%</text>
+        `;
+  }).join('')}
+
+      <!-- Main Axes -->
+      <line x1="${padding}" y1="${h - padding}" x2="${w - padding}" y2="${h - padding}" stroke="#94a3b8" stroke-width="2" />
+      <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${h - padding}" stroke="#94a3b8" stroke-width="2" />
+
+      <!-- Area Fill -->
+      <path d="${areaD}" fill="url(#areaGrad)" />
+
+      <!-- Line Path -->
+      <path d="${pathD}" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+
+      <!-- Data Points -->
+      ${points.map(p => `
+        <circle cx="${p.x}" cy="${p.y}" r="5" fill="white" stroke="var(--primary)" stroke-width="3" />
+        <text x="${p.x}" y="${p.y - 12}" text-anchor="middle" font-size="10" font-weight="900" fill="var(--primary)">${p.val}%</text>
+      `).join('')}
+
+      <!-- X Axis Labels (Dates) -->
+      ${points.map((p) => `
+        <text x="${p.x}" y="${h - 10}" text-anchor="middle" font-size="9" fill="#94a3b8" font-weight="700">${p.date}</text>
+      `).join('')}
+    </svg>
+  `;
+}
+function teacherReset() {
+  if (confirm("🚨 경고: 이 기기의 학생 데이터를 초기화합니까?\n(서버 기록은 보존되나, 이 기기에서의 현재 진행 상황은 초기화됩니다.)")) {
+    const pw = prompt("선생님 암호를 입력하세요");
+    if (pw === '1234') {
+      localStorage.removeItem('sdg_hero_v6');
+      alert("데이터가 깨끗하게 지워졌습니다. 처음으로 돌아갑니다.");
+      location.reload();
+    } else {
+      alert("암호가 틀렸습니다.");
+    }
+  }
+}
+
+async function generateSheetDashboard(event) {
+  if (!isSheetConnected()) {
+    alert('시트에 연결되어 있지 않습니다. (앱스스크립트 웹 앱으로 실행해주세요)');
+    return;
+  }
+  if (!confirm('📊 스프레드시트에 "📊 대시보드" 시트를 생성/갱신합니다.\n기존 대시보드가 있으면 새 데이터로 덮어씁니다.\n진행할까요?')) return;
+
+  const btn = event && event.target ? event.target : null;
+  const originalText = btn ? btn.innerText : '';
+  if (btn) { btn.disabled = true; btn.innerText = '⏳ 생성 요청 전송 중...'; }
+
+  try {
+    await apiGenerateDashboard();
+    if (btn) { btn.disabled = false; btn.innerText = originalText; }
+    alert(HAS_GSR
+      ? '✅ 스프레드시트의 "📊 대시보드" 시트가 생성/갱신되었습니다.'
+      : '✅ 대시보드 생성 요청을 보냈습니다.\n10~30초 후 스프레드시트의 "📊 대시보드" 시트를 확인해주세요.');
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerText = originalText; }
+    alert('❌ 오류: ' + (err.message || err));
+  }
+}
+
+async function clearSpreadsheetData() {
+  if (!isSheetConnected()) {
+    alert('시트에 연결되어 있지 않습니다. (앱스스크립트 웹 앱으로 실행해주세요)');
+    return;
+  }
+
+  if (confirm("🚨 경고: 스프레드시트의 모든 기록 데이터가 영구적으로 삭제됩니다.\n정말로 초기화하시겠습니까?")) {
+    const pw = prompt("관리자 암호를 입력하세요");
+    if (pw !== '1234') { alert("암호가 틀렸습니다."); return; }
+
+    try {
+      await apiClearData();
+      alert(HAS_GSR
+        ? "✅ 시트의 모든 기록이 삭제되었습니다."
+        : "🧹 삭제 요청을 보냈습니다. 잠시 후 시트에서 확인해주세요.");
+      loadSidebarStats();
+    } catch (err) {
+      alert("초기화 요청 중 오류가 발생했습니다: " + (err.message || err));
+      console.error(err);
+    }
+  }
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.innerText = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+function updateDurationDisplay() {
+  const s = document.getElementById('start-date').value;
+  const e = document.getElementById('end-date').value;
+  if (!s || !e) return;
+
+  const start = new Date(s);
+  const end = new Date(e);
+  const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  const displayVal = diff > 0 ? diff : 0;
+
+  const totalDaysSpan = document.getElementById('setup-total-days');
+  if (totalDaysSpan) totalDaysSpan.innerText = displayVal;
+}
+  </script>
 </body>
 </html>
