@@ -118,9 +118,10 @@ body {
     min-height: 0 !important;
   }
 
-  /* 랜드스케이프에서 로그인 상단 여백 과도하지 않게 */
+  /* 큰 화면에서도 로그인 카드 내용이 세로 가운데에 오도록 */
   #step-login {
-    padding-top: 40px !important;
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
   }
 }
 
@@ -173,9 +174,9 @@ main::-webkit-scrollbar {
 #step-login {
   display: flex;
   flex-direction: column !important;
-  justify-content: flex-start !important;
+  justify-content: center !important; /* 로그인 내용을 세로 가운데로 */
   align-items: center !important;
-  padding-top: 100px !important;
+  padding-top: 24px !important;
   min-height: 100% !important;
   width: 100% !important;
   margin: 0 !important;
